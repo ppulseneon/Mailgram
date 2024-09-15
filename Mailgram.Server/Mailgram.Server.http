@@ -1,0 +1,6 @@
+@Mailgram.Server_HostAddress = http://localhost:5012
+
+GET {{Mailgram.Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
