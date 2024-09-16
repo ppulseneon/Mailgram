@@ -38,14 +38,17 @@ namespace Mailgram.Server
             app.MapFallbackToFile("/index.html");
 
             if (HybridSupport.IsElectronActive)
+            {
                 CreateElectronWindow();
-            
+            }
+
             app.Run();
         }
         
         static async void CreateElectronWindow()
         {
             BrowserWindow window = await Electron.WindowManager.CreateWindowAsync();
+            window.SetAutoHideMenuBar(true);
             window.OnClosed += () => Electron.App.Quit();
         }
     }
