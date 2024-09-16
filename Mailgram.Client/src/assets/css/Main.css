@@ -1,0 +1,13 @@
+@import './Base.css';
+
+body {
+  display: flex;
+  overflow-x: hidden;
+  overflow-y: hidden;
+}
+
+.container {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+}

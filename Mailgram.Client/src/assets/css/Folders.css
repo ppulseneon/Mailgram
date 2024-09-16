@@ -1,0 +1,66 @@
+@import './Base.css';
+
+.folders-container {
+    display: flex;
+    flex-direction: column;
+    width: 82px;
+    height: 100%;
+    background-color: #0e1621;
+    overflow-y: auto;
+}
+
+.folder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+
+.folder-active {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    background-color: #25303e;
+}
+
+.folder:hover {
+    background-color: #25303e;
+}
+
+.folder-icon {
+    font-size: 32px;
+    color: #768c9e;
+}
+
+.folder-icon-active {
+    font-size: 32px;
+    color: #5eb5f7;
+}
+
+.folder-name {
+    color: #768c9e;
+    font-size: 12px;
+    padding: 4px;
+    font-weight: 500;
+    word-break: break-all;
+}
+
+.folder-name-active {
+    color: #5eb5f7;
+    font-size: 12px;
+    padding: 4px;
+    font-weight: 500;
+    word-break: break-all;
+}
+
+.settings-icon {
+    font-size: 32px;
+    color: #768c9e;
+}
