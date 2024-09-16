@@ -1,4 +1,6 @@
 
+using ElectronNET.API;
+
 namespace Mailgram.Server
 {
     public class Program
@@ -6,14 +8,15 @@ namespace Mailgram.Server
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-
-            // Add services to the container.
-
+            
             builder.Services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+            
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
+            builder.WebHost.UseElectron(args);
+            builder.Services.AddElectron();
+            
             var app = builder.Build();
 
             app.UseDefaultFiles();
@@ -21,7 +24,7 @@ namespace Mailgram.Server
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
-            {
+            {   
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
@@ -29,13 +32,23 @@ namespace Mailgram.Server
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
-
-
+            
             app.MapControllers();
 
             app.MapFallbackToFile("/index.html");
 
+            if (HybridSupport.IsElectronActive)
+                CreateElectronWindow();
+            
             app.Run();
+            
+            // await app.StartAsync();
+        }
+        
+        static async void CreateElectronWindow()
+        {
+            BrowserWindow window = await Electron.WindowManager.CreateWindowAsync();
+            window.OnClosed += () => Electron.App.Quit();
         }
     }
 }
