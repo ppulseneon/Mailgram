@@ -41,8 +41,6 @@ namespace Mailgram.Server
                 CreateElectronWindow();
             
             app.Run();
-            
-            // await app.StartAsync();
         }
         
         static async void CreateElectronWindow()
