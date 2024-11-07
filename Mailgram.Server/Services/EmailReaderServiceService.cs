@@ -63,7 +63,13 @@ public class EmailReaderServiceService : IEmailReaderService
             // Отключаемся от сервера
             await client.DisconnectAsync(true).ConfigureAwait(false);
 
+            // Проверяем, какие письма есть в хранилище
+            
             // Получаем выборку незагруженных писем в хранилище
+            
+            // Сохраняем письма и файлы
+            
+            // Save attacments https://stackoverflow.com/questions/43331004/mailkit-how-to-download-all-attachments-locally-from-a-mimemessage 
         }
         catch (Exception ex)
         {

@@ -6,6 +6,11 @@ namespace Mailgram.Server.Services;
 
 public class EncryptService: IEncryptService
 {
+    public Task EncryptMessage()
+    {
+        throw new NotImplementedException();
+    }
+
     public async Task EncryptFile(string filepath)
     {
 

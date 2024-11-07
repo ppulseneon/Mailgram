@@ -1,6 +1,3 @@
-using System.Text;
-using Mailgram.Server.Utility;
-
 namespace Mailgram.Server.Models;
 
 public class Account
