@@ -89,6 +89,8 @@ public static class AppData
         fs.Write(encryptedData, 0, encryptedData.Length);
     }
 
+    // todo: save encrypted user simple attachment 
+    
     public static T ReadEncryptedSystemfile<T>(string filePath)
     {
         var appDataDirectory = GetAppDataDirectory();
