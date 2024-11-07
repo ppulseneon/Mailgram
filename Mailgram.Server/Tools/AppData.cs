@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using Mailgram.Server.Tools;
+using Newtonsoft.Json;
 
 namespace Mailgram.Server.Utility;
 
@@ -88,8 +89,32 @@ public static class AppData
         fs.Write(encryptedData, 0, encryptedData.Length);
     }
 
-    public static void ReadEncryptedSystemfile<Object>()
+    public static T ReadEncryptedSystemfile<T>(string filePath)
     {
+        var appDataDirectory = GetAppDataDirectory();
+        var keysDirectory = Path.Combine(appDataDirectory, KeysFolder);
         
+        var privateKeyXml = File.ReadAllText(Path.Combine(keysDirectory, PrivateKeyFilename));
+        var iv  = File.ReadAllBytes(Path.Combine(keysDirectory, IVFilename));
+        var desKey = File.ReadAllBytes(Path.Combine(keysDirectory, DesEncryptedFilename));
+
+        using var rsa = new RSACryptoServiceProvider();
+        rsa.FromXmlString(privateKeyXml);
+        
+        var decryptedDesKey = rsa.Decrypt(desKey, RSAEncryptionPadding.Pkcs1);
+        
+        var encryptedData = File.ReadAllBytes(filePath);
+        var decryptedData = Encrypter.Decrypt(encryptedData, decryptedDesKey, iv);
+        
+        var decryptedJson = Encoding.UTF8.GetString(decryptedData);
+        try
+        {
+            return JsonConvert.DeserializeObject<T>(decryptedJson);
+        }
+        catch (JsonException ex)
+        {
+            Console.WriteLine($"Error deserializing JSON: {ex.Message}");
+            throw;
+        }
     }
 }
