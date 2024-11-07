@@ -2,7 +2,7 @@
 
 public interface IEncryptService
 {
-    void EncryptFile(string filepath);
+    Task EncryptFile(string filepath);
     string DecryptFile(string filepath);
     string CreateMessageSign();
     bool VerifySign();
