@@ -1,11 +1,7 @@
-import '../../assets/css/Workspace.css'
+import Empty from "./Empty.tsx";
 
 function Workspace(): JSX.Element {
-    return <div className="workspace-container">
-        <p>
-                Откройте или начните новый диалог
-            </p>
-    </div>
+    return <Empty />
 }
 
 export default Workspace;

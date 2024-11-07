@@ -1,8 +1,0 @@
-.chats-container {
-    display: flex;
-    flex-direction: column;
-    width: 22vw;
-    height: 100%;
-    background-color: #17212b;
-    padding: 20px;
-}

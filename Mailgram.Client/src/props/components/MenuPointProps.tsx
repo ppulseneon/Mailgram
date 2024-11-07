@@ -1,10 +1,9 @@
 import React from "react";
 
-interface FolderButtonProps {
+interface MenuPointProps {
     icon: React.ReactNode;
     text: string;
     onClick?: () => void;
-    isActive: boolean;
 }
 
-export default FolderButtonProps; 
+export default MenuPointProps; 

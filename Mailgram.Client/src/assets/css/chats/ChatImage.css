@@ -1,0 +1,20 @@
+.chat-image {
+    background-color: gray;
+    display: flex;
+    flex-direction: column;
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+    min-height: 52px;
+    min-width: 52px;
+    max-height: 52px;
+    max-width: 52px;
+    margin: 8px;
+}
+
+.chat-image p{
+    color: whitesmoke;
+    font-size: 18px;
+    text-align: center;
+    font-weight: bold;
+}

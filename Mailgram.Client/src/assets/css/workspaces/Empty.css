@@ -1,0 +1,21 @@
+.workspace-container {
+    width: calc(100vw - 22vw - 82px);
+    height: 100%;
+    background-color: #0e1621;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.empty-message {
+    background-color: #1e2c3a;
+    padding: 2px 14px 2px 14px;
+    border-radius: 20px;
+}
+
+.empty-text {
+    font-size: 14px;
+    font-weight: 600;
+}

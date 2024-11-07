@@ -12,7 +12,7 @@ const FolderContext = createContext<FolderContextType>({
 });
 
 
-const FolderProvider = ({ children }) => {
+const FolderProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [folder, setFolder] = useState(FoldersList.Received);
 
   return (

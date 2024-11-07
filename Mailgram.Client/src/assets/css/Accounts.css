@@ -1,0 +1,52 @@
+.accounts-container {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    background-color: #0e1621;
+    flex-direction: column;
+    align-items: center;
+    overflow-y: scroll;
+}
+
+.accounts-container::-webkit-scrollbar {
+    display: none;  /* Safari and Chrome */
+}
+
+.accounts-list {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    flex-direction: column;
+}
+
+.account-container {
+    background-color: #17212b;
+    padding: 16px;
+    border-radius: 8px;
+    width: 20%;
+    min-width: 300px;
+    margin: 8px 0px 0px 0px;
+    cursor: pointer;
+}
+
+.account-container:hover {
+    background-color: #1d2a39;
+}
+
+.account-info {
+}
+
+.account-info h1 {
+    font-size: 16px;
+}
+
+.platform-pill{
+    background-color: #4e8bcf;
+    font-size: 12px;
+    font-weight: bold;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 50px;
+    margin-left: 10px;
+    text-transform: uppercase;
+}

@@ -1,0 +1,27 @@
+.chats-container {
+    display: flex;
+    flex-direction: column;
+    width: 22vw;
+    height: 100%;
+    background-color: #17212b;
+}
+
+.chat {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    padding: 4px;
+}
+
+.chat-active {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    padding: 4px;
+    background-color: #2b5278;
+}
+
+.chat:hover {
+    cursor: pointer;
+    background-color: #202b36;
+}

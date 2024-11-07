@@ -1,0 +1,85 @@
+.menu-pop-up
+{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+    background-color: rgba(0, 0, 0, .3);
+    visibility: hidden;
+}
+
+.menu-pop-up-container {
+    display: flex;
+    background-color: #17212b;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    margin: 300px auto auto;
+}
+
+.menu-pop-up-container-header{
+    padding: 16px 16px 0 16px;
+}
+
+
+.menu-pop-up-container-header h1{
+    color: #ebeae0;
+    text-align: left;
+    font-size: 18px;
+    font-weight: bold;
+    padding-bottom: 16px;
+}
+
+.menu-pop-up-container-header h2{
+    color: #ebeae0;
+    text-align: left;
+    font-size: 16px;
+    font-weight: 500;
+    padding-bottom: 4px;
+    width: 30vh;
+}
+
+.menu-pop-up-container-header p{
+    font-size: 14px;
+    color: #6e8196;
+}
+
+.menu-pop-up-container hr{
+    display: block;
+    height: 1px;
+    width: 100%;
+    border: 4px solid #222d3b;
+    margin: 1em 0;
+    padding: 0;
+}
+
+.menu-pop-up-container-points {
+    width: 100%;
+    padding-bottom: 16px;
+}
+
+.menu-pop-up-container-point {
+    width: 100%;
+    display: flex;
+    text-align: left;
+    flex-direction: row;
+    padding: 4px 16px 4px 16px;
+    align-items: center;
+}
+
+.menu-pop-up-container-point:hover {
+    cursor: pointer;
+    background-color: #202b36;
+}
+
+.menu-pop-up-container-point-text {
+    padding-left: 4px;
+}
+
+.menu-pop-up-container-point-icon {
+    font-size: 24px;
+}

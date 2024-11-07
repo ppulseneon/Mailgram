@@ -1,8 +1,0 @@
-.workspace-container {
-    display: flex;
-    flex-direction: column;
-    width: calc(100vw - 22vw - 82px);
-    height: 100%;
-    background-color: #0e1621;
-    padding: 20px;
-}

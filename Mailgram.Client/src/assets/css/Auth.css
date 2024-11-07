@@ -1,0 +1,109 @@
+.auth-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background-color: #17212b;
+    padding: 16px 16px 16px 16px;
+    border-radius: 8px;
+    width: 20%;
+    min-width: 300px;
+    margin: 28vh auto auto;
+}
+
+.auth-container h1{
+    color: #ebebeb;
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    padding-bottom: 16px;
+}
+
+.button-container {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.login-button {
+    background-color: transparent;
+    border: none;
+    color: #4e8bcf;    
+    font-size: 16px;
+    font-weight: bold;
+    padding: 12px 12px 12px 12px;
+    border-radius: 8px;
+}
+
+.login-button:hover {
+    background-color: #1d2a39;
+}
+
+/* Input container */
+.input-container {
+    position: relative;
+    margin-bottom: 22px;
+}
+
+/* Input field */
+.input-field {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border: none;
+    border-bottom: 2px solid #6f8398;
+    outline: none;
+    background-color: transparent;
+    color: #ebebeb;
+}
+
+/* Input label */
+.input-label {
+    position: absolute;
+    top: 0;
+    left: 0;
+    font-size: 16px;
+    color: rgba(26, 56, 56, 0); 
+    pointer-events: none;
+    -webkit-transition: all 0.3s ease;
+    transition: all 0.3s ease;
+}
+
+/* Input placeholder color */
+.input-field::placeholder {
+    color: #6f8398;
+}
+
+/* Input highlight */
+.input-highlight {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    width: 0;
+    background-color: #4e8bcf;
+    -webkit-transition: all 0.3s ease;
+    transition: all 0.3s ease;
+}
+
+/* Input field:focus styles */
+.input-field:focus + .input-label {
+    top: -15px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #4e8bcf;
+}
+
+.input-field:focus + .input-label + .input-highlight {
+    width: 100%;
+}
+    
+.email-select{
+    width: 200px;
+}
+
+.error-message {
+    font-size: 14px;
+    font-weight: bold;
+    text-transform: initial;
+    color: #cf4eb1;
+}

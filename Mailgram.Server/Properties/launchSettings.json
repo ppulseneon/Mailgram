@@ -15,7 +15,13 @@
       "commandLineArgs": "start",
       "workingDirectory": "."
     },
-
+    
+    "Electron.NET App Watch": {
+      "commandName": "Executable",
+      "executablePath": "electronize",
+      "commandLineArgs": "start /watch",
+      "workingDirectory": "."
+    },
     "http": {
       "commandName": "Project",
       "dotnetRunMessages": true,
