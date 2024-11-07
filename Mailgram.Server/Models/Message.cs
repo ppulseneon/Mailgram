@@ -5,7 +5,8 @@ namespace Mailgram.Server.Models;
 
 public class Message
 {
+    public uint Id { get; set; }
     public MimeMessage MimeMessage { get; set; }
-    public List<Folders> Folders { get; set; }
-    public List<string> AttachmentFiles { get; set; } 
+    public Folders Folder { get; set; }
+    public List<string> AttachmentFiles { get; set; } = [];
 }

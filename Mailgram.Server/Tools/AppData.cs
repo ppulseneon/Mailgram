@@ -2,6 +2,8 @@ namespace Mailgram.Server.Utility;
 
 public static class AppData
 {
+    private const string KeysFolder = "keys";
+    
     public static string GetAppDataDirectory()
     {
         string appDataDirectory = string.Empty;
@@ -21,5 +23,19 @@ public static class AppData
         }
 
         return appDataDirectory;
+    }
+
+    public static void InitAppKeys()
+    {
+        var appDataDirectory = GetAppDataDirectory();
+        var keysDirectory = Path.Combine(appDataDirectory, KeysFolder);
+        
+        if (Directory.Exists(keysDirectory))
+        {
+            return;
+        }
+        
+        Directory.CreateDirectory(keysDirectory);
+        
     }
 }

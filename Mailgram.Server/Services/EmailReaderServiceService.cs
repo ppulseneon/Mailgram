@@ -1,3 +1,4 @@
+using System.Net.Mail;
 using Mailgram.Server.Models;
 using Mailgram.Server.Services.Interface;
 using MailKit;
@@ -31,7 +32,7 @@ public class EmailReaderServiceService : IEmailReaderService
             await inbox.OpenAsync(FolderAccess.ReadOnly).ConfigureAwait(false);
 
             // Создаем список для хранения всех писем
-            var allMessages = new List<MimeMessage>();
+            var allMessages = new List<Message>();
 
             // Получаем идентификаторы (UID) всех сообщений в папке. SearchQuery.All - все письма.
             var uids = await inbox.SearchAsync(SearchQuery.All).ConfigureAwait(false);
@@ -54,8 +55,16 @@ public class EmailReaderServiceService : IEmailReaderService
                 foreach (var summary in messages)
                 {
                     // Получаем полное письмо по его UID
-                    var message = await inbox.GetMessageAsync(summary.UniqueId)
+                    var mimeMessage = await inbox.GetMessageAsync(summary.UniqueId)
                         .ConfigureAwait(false);
+
+                    var message = new Message
+                    {
+                        Id = summary.UniqueId.Id,
+                        MimeMessage = mimeMessage,
+                        AttachmentFiles = []
+                    };
+                    
                     allMessages.Add(message);
                 }
             }
