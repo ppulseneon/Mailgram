@@ -22,7 +22,7 @@ public class EmailReaderServiceService : IEmailReaderService
             await client.ConnectAsync(account.ImapCredentials.Hostname, account.ImapCredentials.Port, true).ConfigureAwait(false);
 
             // Авторизуемся на нем
-            await client.AuthenticateAsync(account.Login, account.GetPassword()).ConfigureAwait(false);
+            await client.AuthenticateAsync(account.Login, account.Password).ConfigureAwait(false);
 
             // Получаем папку "Входящие"
             var inbox = client.Inbox;

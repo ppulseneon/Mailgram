@@ -9,15 +9,10 @@ public static class AccountMapper
 {
     public static Account ToAccount(this AccountRequest request)
     {
-        var security = new PasswordSecurity();
-        var salt = security.GenerateSalt();
-        var hashedPassword = security.HashPassword(request.Password, salt);
-        
         return new Account
         {
             Login = request.Login,
-            EncryptedPassword = security.EncryptPassword(hashedPassword),
-            Salt = salt,
+            Password = request.Password,
             SmtpCredentials = request.SmtpCredentials,
             ImapCredentials = request.ImapCredentials,
             Platform = request.Platform,
