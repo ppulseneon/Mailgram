@@ -1,22 +1,26 @@
+using System.Security.Cryptography;
+
 namespace Mailgram.Server.Utility;
 
 public static class AppData
 {
     private const string KeysFolder = "keys";
+    private const string DesEncryptedFilename = "encrypt.key";  
+    private const string PrivateKeyFilename = "private.key";
+    private const string PublicKeyFilename = "public.key";
+    private const string IVFilename = "IV.key";
     
     public static string GetAppDataDirectory()
     {
-        string appDataDirectory = string.Empty;
-        
-        if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+        var appDataDirectory = Environment.OSVersion.Platform switch
         {
-            appDataDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".mailgram", "mailgram");
-        }
-        else if (Environment.OSVersion.Platform == PlatformID.Unix)
-        {
-            appDataDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config", "mailgram", "mailgram");
-        }
-        
+            PlatformID.Win32NT => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                ".mailgram", "mailgram"),
+            PlatformID.Unix => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config",
+                "mailgram", "mailgram"),
+            _ => string.Empty
+        };
+
         if (!Directory.Exists(appDataDirectory))
         {
             Directory.CreateDirectory(appDataDirectory);
@@ -36,6 +40,33 @@ public static class AppData
         }
         
         Directory.CreateDirectory(keysDirectory);
+
+        using var des = TripleDES.Create();
+        var desKey = des.Key;
+        var IV = des.IV;
+
+        // Сохраняем DES-ключ и IV в файлы
+        var ivPath =  Path.Combine(keysDirectory, IVFilename);
+        File.WriteAllBytes(ivPath, IV);
         
+        // Шаг 2. Генерация приватного и публичного ключа при помощи RSA
+        using RSACryptoServiceProvider rsaCryptoServiceProvider = new();
+        var rsaParameters = rsaCryptoServiceProvider.ExportParameters(true);
+
+        // Экспорт публичного
+        var publicKeyXml = rsaCryptoServiceProvider.ToXmlString(false);
+        var publicPath = Path.Combine(keysDirectory, PublicKeyFilename);
+        File.WriteAllText(publicPath, publicKeyXml);
+
+        // Экспорт приватного 
+        var privateKeyXml = rsaCryptoServiceProvider.ToXmlString(true);
+        var privatePath = Path.Combine(keysDirectory, PrivateKeyFilename);
+        File.WriteAllText(privatePath, privateKeyXml);
+        
+        var desEncryptKey = rsaCryptoServiceProvider.Encrypt(desKey, RSAEncryptionPadding.Pkcs1);
+
+        // Экспортируем зашифрованный dsa key
+        var rsa = Path.Combine(keysDirectory, DesEncryptedFilename);
+        File.WriteAllBytes(rsa, desKey);
     }
 }
