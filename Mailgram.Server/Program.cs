@@ -1,6 +1,7 @@
 
 using ElectronNET.API;
 using Mailgram.Server.Extensions;
+using Mailgram.Server.Utility;
 
 namespace Mailgram.Server;
 
@@ -52,6 +53,8 @@ public class Program
             CreateElectronWindow();
         }
 
+        AppData.InitAppKeys();
+        
         app.Run();
     }
         

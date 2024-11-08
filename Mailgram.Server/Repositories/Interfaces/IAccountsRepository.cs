@@ -2,7 +2,7 @@ using Mailgram.Server.Models;
 
 namespace Mailgram.Server.Repositories.Interfaces;
 
-public interface IAccountRepository
+public interface IAccountsRepository
 { 
     Task CreateAccountAsync(Account account);
     Task<List<Account>> GetAccountsAsync();

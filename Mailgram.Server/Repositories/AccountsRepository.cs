@@ -5,11 +5,11 @@ using Newtonsoft.Json;
 
 namespace Mailgram.Server.Repositories;
 
-public class AccountRepository: IAccountRepository
+public class AccountsRepository: IAccountsRepository
 {
     private readonly string _basePath;
     
-    public AccountRepository()
+    public AccountsRepository()
     {
         _basePath = AppData.GetAppDataDirectory();
     }
@@ -31,7 +31,7 @@ public class AccountRepository: IAccountRepository
         Directory.CreateDirectory(accountDirectoryPath);
         
         var jsonString = JsonConvert.SerializeObject(account);
-        await File.WriteAllTextAsync(accountFilePath, jsonString);
+        await AppData.SaveEncryptedSystemFile(jsonString, accountFilePath);
     }
 
     public async Task<List<Account>> GetAccountsAsync()
@@ -47,8 +47,7 @@ public class AccountRepository: IAccountRepository
             if (!File.Exists(filePath)) continue;
             try
             {
-                var jsonString = await File.ReadAllTextAsync(filePath);
-                var account = JsonConvert.DeserializeObject<Account>(jsonString);
+                var account = await AppData.ReadEncryptedSystemfile<Account>(filePath);
 
                 if (account != null)
                 {

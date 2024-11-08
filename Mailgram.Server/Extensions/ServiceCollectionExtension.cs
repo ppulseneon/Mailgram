@@ -10,13 +10,13 @@ public static class ServiceCollectionExtension
     public static IServiceCollection AddRepositories(this IServiceCollection services)
     {
         return services
-            .AddSingleton<IAccountRepository, AccountRepository>();
+            .AddSingleton<IAccountsRepository, AccountsRepository>();
     }
     
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
         return services
             .AddScoped<IAccountService, AccountService>()
-            .AddScoped<IEmailReaderService, EmailReaderServiceService>();
+            .AddScoped<IEmailReaderService, EmailReaderService>();
     }
 }

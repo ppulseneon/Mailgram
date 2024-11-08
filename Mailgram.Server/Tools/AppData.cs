@@ -46,13 +46,13 @@ public static class AppData
 
         using var des = TripleDES.Create();
         var desKey = des.Key;
-        var IV = des.IV;
+        var iv = des.IV;
 
         // Сохраняем DES-ключ и IV в файлы
         var ivPath = Path.Combine(keysDirectory, IVFilename);
-        File.WriteAllBytes(ivPath, IV);
+        File.WriteAllBytes(ivPath, iv);
         
-        // Шаг 2. Генерация приватного и публичного ключа при помощи RSA
+        // Генерация приватного и публичного ключа при помощи RSA
         using RSACryptoServiceProvider rsaCryptoServiceProvider = new();
         var rsaParameters = rsaCryptoServiceProvider.ExportParameters(true);
 
@@ -70,42 +70,46 @@ public static class AppData
 
         // Экспортируем зашифрованный dsa key
         var rsa = Path.Combine(keysDirectory, DesEncryptedFilename);
-        File.WriteAllBytes(rsa, desKey);
+        File.WriteAllBytes(rsa, desEncryptKey);
     }
 
-    public static void SaveEncryptedSystemFile(string jsonContent, string encryptedFilePath)
+    public static async Task SaveEncryptedSystemFile(string jsonContent, string encryptedFilePath)
     {
         var data = Encoding.UTF8.GetBytes(jsonContent);
         
         var appDataDirectory = GetAppDataDirectory();
         var keysDirectory = Path.Combine(appDataDirectory, KeysFolder);
         
-        var iv = File.ReadAllBytes(Path.Combine(keysDirectory, IVFilename));
-        var desKey = File.ReadAllBytes(Path.Combine(keysDirectory, DesEncryptedFilename));
+        var iv = await File.ReadAllBytesAsync(Path.Combine(keysDirectory, IVFilename));
+        var desKey = await File.ReadAllBytesAsync(Path.Combine(keysDirectory, DesEncryptedFilename));
+        var privateKeyXml = await File.ReadAllTextAsync(Path.Combine(keysDirectory, PrivateKeyFilename));
+        
+        using var rsa = new RSACryptoServiceProvider();
+        rsa.FromXmlString(privateKeyXml);
+        var decryptedDesKey = rsa.Decrypt(desKey, RSAEncryptionPadding.Pkcs1);
+        
+        var encryptedData = Encrypter.Encrypt(data, decryptedDesKey, iv);
 
-        var encryptedData = Encrypter.Encrypt(data, desKey, iv);
-
-        using var fs = new FileStream(encryptedFilePath, FileMode.Create);
-        fs.Write(encryptedData, 0, encryptedData.Length);
+        await File.WriteAllBytesAsync(encryptedFilePath, encryptedData);
     }
 
     // todo: save encrypted user simple attachment 
     
-    public static T ReadEncryptedSystemfile<T>(string filePath)
+    public static async Task<T?> ReadEncryptedSystemfile<T>(string filePath)
     {
         var appDataDirectory = GetAppDataDirectory();
         var keysDirectory = Path.Combine(appDataDirectory, KeysFolder);
         
-        var privateKeyXml = File.ReadAllText(Path.Combine(keysDirectory, PrivateKeyFilename));
-        var iv  = File.ReadAllBytes(Path.Combine(keysDirectory, IVFilename));
-        var desKey = File.ReadAllBytes(Path.Combine(keysDirectory, DesEncryptedFilename));
+        var privateKeyXml = await File.ReadAllTextAsync(Path.Combine(keysDirectory, PrivateKeyFilename));
+        var iv  = await File.ReadAllBytesAsync(Path.Combine(keysDirectory, IVFilename));
+        var desKey = await File.ReadAllBytesAsync(Path.Combine(keysDirectory, DesEncryptedFilename));
 
         using var rsa = new RSACryptoServiceProvider();
         rsa.FromXmlString(privateKeyXml);
         
         var decryptedDesKey = rsa.Decrypt(desKey, RSAEncryptionPadding.Pkcs1);
         
-        var encryptedData = File.ReadAllBytes(filePath);
+        var encryptedData = await File.ReadAllBytesAsync(filePath);
         var decryptedData = Encrypter.Decrypt(encryptedData, decryptedDesKey, iv);
         
         var decryptedJson = Encoding.UTF8.GetString(decryptedData);

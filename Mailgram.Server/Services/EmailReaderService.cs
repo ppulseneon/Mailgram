@@ -8,7 +8,7 @@ using MimeKit;
 
 namespace Mailgram.Server.Services;
 
-public class EmailReaderServiceService : IEmailReaderService
+public class EmailReaderService : IEmailReaderService
 {
     public async Task LoadEmailsAsync(Account account)
     {

@@ -8,7 +8,7 @@ using MailKit.Security;
 
 namespace Mailgram.Server.Services;
 
-public class AccountService(IAccountRepository accountRepository) : IAccountService
+public class AccountService(IAccountsRepository accountsRepository) : IAccountService
 {
     public async Task<Account?> Add(AccountRequest request)
     {
@@ -19,24 +19,24 @@ public class AccountService(IAccountRepository accountRepository) : IAccountServ
         
         var account = request.ToAccount();
         
-        await accountRepository.CreateAccountAsync(account);
+        await accountsRepository.CreateAccountAsync(account);
         
         return account;
     }
 
     public async Task<Account?> Get(string email)
     {
-        return await accountRepository.GetAccountAsync(email);
+        return await accountsRepository.GetAccountAsync(email);
     }
     
     public async Task<Account?> Get(Guid id)
     {
-        return await accountRepository.GetAccountAsync(id);
+        return await accountsRepository.GetAccountAsync(id);
     }
 
     public async Task<List<Account>> GetAll()
     {
-        return await accountRepository.GetAccountsAsync();
+        return await accountsRepository.GetAccountsAsync();
     }
 
     private async Task<bool> TryLogin(AccountRequest request)

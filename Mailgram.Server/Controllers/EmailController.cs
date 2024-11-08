@@ -25,10 +25,12 @@ public class EmailController(IAccountService accountService, IEmailReaderService
     [HttpGet(Name = "GetEmail")]
     public async Task<ActionResult<List<MessageResponse>>> Get(Guid id)
     {
+        var messages = await 
+        
         return Ok(new List<MessageResponse>());
     }
     
-    // Send Email
+    // Send Email (synhronize with server)
     
     // Switch folder email
 }
