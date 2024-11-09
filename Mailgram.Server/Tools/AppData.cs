@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using Mailgram.Server.Models;
 using Mailgram.Server.Tools;
 using Newtonsoft.Json;
 
@@ -11,7 +12,7 @@ public static class AppData
     private const string DesEncryptedFilename = "encrypt.key";  
     private const string PrivateKeyFilename = "private.key";
     private const string PublicKeyFilename = "public.key";
-    private const string IVFilename = "IV.key";
+    private const string IvFilename = "IV.key";
     
     public static string GetAppDataDirectory()
     {
@@ -49,7 +50,7 @@ public static class AppData
         var iv = des.IV;
 
         // Сохраняем DES-ключ и IV в файлы
-        var ivPath = Path.Combine(keysDirectory, IVFilename);
+        var ivPath = Path.Combine(keysDirectory, IvFilename);
         File.WriteAllBytes(ivPath, iv);
         
         // Генерация приватного и публичного ключа при помощи RSA
@@ -73,6 +74,24 @@ public static class AppData
         File.WriteAllBytes(rsa, desEncryptKey);
     }
 
+    public static async Task SaveMessages(Guid userId, List<Message> messages)
+    {
+        var userMessagesDirectory = Path.Combine(GetAppDataDirectory(), userId.ToString(), "messages");   
+        
+        foreach (var message in messages)
+        {
+            // Получаем путь к сообщению
+            var messagePath = Path.Combine(userMessagesDirectory, message.Id.ToString(), $"{message.Id}.message");
+            
+            var jsonMessage =  JsonConvert.SerializeObject(message);
+            
+            // Сохраняем сообщение с системными ключами
+            await SaveEncryptedSystemFile(jsonMessage, messagePath);
+            
+            // todo: сохранить и удалить файлы сообщения
+        }
+    }
+    
     public static async Task SaveEncryptedSystemFile(string jsonContent, string encryptedFilePath)
     {
         var data = Encoding.UTF8.GetBytes(jsonContent);
@@ -80,7 +99,7 @@ public static class AppData
         var appDataDirectory = GetAppDataDirectory();
         var keysDirectory = Path.Combine(appDataDirectory, KeysFolder);
         
-        var iv = await File.ReadAllBytesAsync(Path.Combine(keysDirectory, IVFilename));
+        var iv = await File.ReadAllBytesAsync(Path.Combine(keysDirectory, IvFilename));
         var desKey = await File.ReadAllBytesAsync(Path.Combine(keysDirectory, DesEncryptedFilename));
         var privateKeyXml = await File.ReadAllTextAsync(Path.Combine(keysDirectory, PrivateKeyFilename));
         
@@ -101,7 +120,7 @@ public static class AppData
         var keysDirectory = Path.Combine(appDataDirectory, KeysFolder);
         
         var privateKeyXml = await File.ReadAllTextAsync(Path.Combine(keysDirectory, PrivateKeyFilename));
-        var iv  = await File.ReadAllBytesAsync(Path.Combine(keysDirectory, IVFilename));
+        var iv  = await File.ReadAllBytesAsync(Path.Combine(keysDirectory, IvFilename));
         var desKey = await File.ReadAllBytesAsync(Path.Combine(keysDirectory, DesEncryptedFilename));
 
         using var rsa = new RSACryptoServiceProvider();

@@ -14,6 +14,9 @@ public class EmailReaderService : IEmailReaderService
     {
         // Получаем все письма из базы данных
         // var uploadedEmails;
+        
+        // Создаем список для хранения всех писем
+        var allMessages = new List<Message>();
 
         // Подключаемся через IMAP к серверу
         using var client = new ImapClient();
@@ -31,9 +34,6 @@ public class EmailReaderService : IEmailReaderService
             // Открываем папку "Входящие" в режиме только для чтения
             await inbox.OpenAsync(FolderAccess.ReadOnly).ConfigureAwait(false);
 
-            // Создаем список для хранения всех писем
-            var allMessages = new List<Message>();
-
             // Получаем идентификаторы (UID) всех сообщений в папке. SearchQuery.All - все письма.
             var uids = await inbox.SearchAsync(SearchQuery.All).ConfigureAwait(false);
 
@@ -41,7 +41,7 @@ public class EmailReaderService : IEmailReaderService
             const int batchSize = 100;
 
             // Цикл по всем UID с шагом batchSize
-            for (int i = 0; i < uids.Count; i += batchSize)
+            for (var i = 0; i < uids.Count; i += batchSize)
             {
                 // Берем пачку UID
                 var batchUids = uids.Skip(i).Take(batchSize).ToList();
@@ -62,7 +62,7 @@ public class EmailReaderService : IEmailReaderService
                     {
                         Id = summary.UniqueId.Id,
                         MimeMessage = mimeMessage,
-                        AttachmentFiles = []
+                        AttachmentFiles = [] // todo: скачивать
                     };
                     
                     allMessages.Add(message);
@@ -74,10 +74,14 @@ public class EmailReaderService : IEmailReaderService
 
             // Проверяем, какие письма есть в хранилище
             
-            // Получаем выборку незагруженных писем в хранилище
+            // Обработка есть ли зашифрованные письма
             
+            // Получаем выборку незагруженных писем в хранилище
+            var newEmails = allMessages;
+
             // Сохраняем письма и файлы
             
+
             // Save attacments https://stackoverflow.com/questions/43331004/mailkit-how-to-download-all-attachments-locally-from-a-mimemessage 
         }
         catch (Exception ex)
