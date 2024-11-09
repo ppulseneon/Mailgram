@@ -1,19 +1,19 @@
-using System.Net.Mail;
+using Mailgram.Server.Extensions.Mappers;
 using Mailgram.Server.Models;
+using Mailgram.Server.Repositories.Interfaces;
 using Mailgram.Server.Services.Interface;
 using MailKit;
 using MailKit.Net.Imap;
 using MailKit.Search;
-using MimeKit;
 
 namespace Mailgram.Server.Services;
 
-public class EmailReaderService : IEmailReaderService
+public class EmailReaderService(IMessagesRepository messagesRepository) : IEmailReaderService
 {
-    public async Task LoadEmailsAsync(Account account)
+    public async Task SyncAsync(Account account)
     {
         // Получаем все письма из базы данных
-        // var uploadedEmails;
+        var localSavedMessages = await messagesRepository.GetMessages(account.Id);
         
         // Создаем список для хранения всех писем
         var allMessages = new List<Message>();
@@ -58,13 +58,7 @@ public class EmailReaderService : IEmailReaderService
                     var mimeMessage = await inbox.GetMessageAsync(summary.UniqueId)
                         .ConfigureAwait(false);
 
-                    var message = new Message
-                    {
-                        Id = summary.UniqueId.Id,
-                        MimeMessage = mimeMessage,
-                        AttachmentFiles = [] // todo: скачивать
-                    };
-                    
+                    var message = mimeMessage.ToMessage(summary.UniqueId.Id);
                     allMessages.Add(message);
                 }
             }
@@ -77,16 +71,22 @@ public class EmailReaderService : IEmailReaderService
             // Обработка есть ли зашифрованные письма
             
             // Получаем выборку незагруженных писем в хранилище
-            var newEmails = allMessages;
+            var newEmails = allMessages.Where(m => localSavedMessages.All(ue => ue.Id != m.Id)).ToList();;
 
             // Сохраняем письма и файлы
+            await messagesRepository.SaveMessages(account.Id, newEmails);
             
-
             // Save attacments https://stackoverflow.com/questions/43331004/mailkit-how-to-download-all-attachments-locally-from-a-mimemessage 
         }
         catch (Exception ex)
         {
             Console.WriteLine("LoadEmails catch exception: " + ex.Message);
         }
+    }
+
+    public async Task<List<Message>> GetAll(Guid userId)
+    {
+        var messages = await messagesRepository.GetMessages(userId);
+        return messages.OrderByDescending(message => message.Date).ToList();
     }
 }

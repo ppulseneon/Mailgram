@@ -47,7 +47,7 @@ public class AccountsRepository: IAccountsRepository
             if (!File.Exists(filePath)) continue;
             try
             {
-                var account = await AppData.ReadEncryptedSystemfile<Account>(filePath);
+                var account = await AppData.ReadEncryptedSystemFile<Account>(filePath);
 
                 if (account != null)
                 {
@@ -89,5 +89,23 @@ public class AccountsRepository: IAccountsRepository
         
         // Возвращаем аккаунт с совпадающим логином
         return accounts.FirstOrDefault(a => a.Id == id);
+    }
+
+    private void CreateBaseUserDirectories(string accountDirectoryPath)
+    {
+        // Создаем папку пользователя 
+        Directory.CreateDirectory(accountDirectoryPath);
+
+        // Получаем путь к папке сообщений пользователя
+        var messagesFolder = Path.Combine(accountDirectoryPath, SystemFoldersNames.Messages);
+        
+        // Создаем папку сообщений пользователя
+        Directory.CreateDirectory(messagesFolder);
+        
+        // Получаем путь к папке контактов пользователя
+        var contactsFolder = Path.Combine(accountDirectoryPath, SystemFoldersNames.Contacts);
+        
+        // Создаем папку контактов пользователя
+        Directory.CreateDirectory(contactsFolder);
     }
 }

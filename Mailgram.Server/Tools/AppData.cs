@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using Mailgram.Server.Constants;
 using Mailgram.Server.Models;
 using Mailgram.Server.Tools;
 using Newtonsoft.Json;
@@ -16,12 +17,14 @@ public static class AppData
     
     public static string GetAppDataDirectory()
     {
+        var appName = SystemFoldersNames.Application;
+        
         var appDataDirectory = Environment.OSVersion.Platform switch
         {
             PlatformID.Win32NT => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                ".mailgram", "mailgram"),
+                $".{appName}", appName),
             PlatformID.Unix => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config",
-                "mailgram", "mailgram"),
+                appName, appName),
             _ => string.Empty
         };
 
@@ -73,24 +76,6 @@ public static class AppData
         var rsa = Path.Combine(keysDirectory, DesEncryptedFilename);
         File.WriteAllBytes(rsa, desEncryptKey);
     }
-
-    public static async Task SaveMessages(Guid userId, List<Message> messages)
-    {
-        var userMessagesDirectory = Path.Combine(GetAppDataDirectory(), userId.ToString(), "messages");   
-        
-        foreach (var message in messages)
-        {
-            // Получаем путь к сообщению
-            var messagePath = Path.Combine(userMessagesDirectory, message.Id.ToString(), $"{message.Id}.message");
-            
-            var jsonMessage =  JsonConvert.SerializeObject(message);
-            
-            // Сохраняем сообщение с системными ключами
-            await SaveEncryptedSystemFile(jsonMessage, messagePath);
-            
-            // todo: сохранить и удалить файлы сообщения
-        }
-    }
     
     public static async Task SaveEncryptedSystemFile(string jsonContent, string encryptedFilePath)
     {
@@ -114,7 +99,7 @@ public static class AppData
 
     // todo: save encrypted user simple attachment 
     
-    public static async Task<T?> ReadEncryptedSystemfile<T>(string filePath)
+    public static async Task<T?> ReadEncryptedSystemFile<T>(string filePath)
     {
         var appDataDirectory = GetAppDataDirectory();
         var keysDirectory = Path.Combine(appDataDirectory, KeysFolder);

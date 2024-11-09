@@ -1,3 +1,4 @@
+using Mailgram.Server.Extensions.Mappers;
 using Mailgram.Server.Models.Responses;
 using Mailgram.Server.Services.Interface;
 using Microsoft.AspNetCore.Mvc;
@@ -18,16 +19,23 @@ public class EmailController(IAccountService accountService, IEmailReaderService
             return NotFound();
         }
         
-        await emailReaderService.LoadEmailsAsync(account);
+        await emailReaderService.SyncAsync(account);
         return Ok();
     }
     
-    [HttpGet(Name = "GetEmail")]
-    public async Task<ActionResult<List<MessageResponse>>> Get(Guid id)
+    [HttpGet(Name = "GetEmails")]
+    public async Task<ActionResult<List<MessagesResponse>>> Get(Guid id)
     {
-        // var messages = await 
+        var account = await accountService.Get(id);
+
+        if (account == null)
+        {
+            return NotFound();
+        }
         
-        return Ok(new List<MessageResponse>());
+        var messages = await emailReaderService.GetAll(id);
+        
+        return Ok(messages.ToResponse());
     }
     
     // Send Email (synhronize with server)

@@ -4,5 +4,6 @@ namespace Mailgram.Server.Services.Interface;
 
 public interface IEmailReaderService
 {
-    Task LoadEmailsAsync(Account account);
+    Task SyncAsync(Account account);
+    Task<List<Message>> GetAll(Guid userId);
 }

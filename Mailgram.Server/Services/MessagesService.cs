@@ -7,6 +7,7 @@ public class MessagesService: IMessagesService
 {
     public async Task<List<Message>> GetMessages(Guid userId)
     {
-        // await        
+        // await
+        throw new NotImplementedException();
     }
 }

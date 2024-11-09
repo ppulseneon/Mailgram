@@ -10,6 +10,7 @@ public static class ServiceCollectionExtension
     public static IServiceCollection AddRepositories(this IServiceCollection services)
     {
         return services
+            .AddSingleton<IMessagesRepository, MessagesRepository>()
             .AddSingleton<IAccountsRepository, AccountsRepository>();
     }
     
