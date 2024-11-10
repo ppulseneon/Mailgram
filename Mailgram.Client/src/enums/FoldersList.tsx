@@ -1,8 +1,9 @@
 export const enum FoldersList {
     SendButton,
     Received,
-    Sended,
+    Sent,
     Favorite,
     Deleted,
     Drafted,  
+    Contacts,
 }

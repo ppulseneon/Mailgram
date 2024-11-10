@@ -17,7 +17,7 @@ public static class AppData
     
     public static string GetAppDataDirectory()
     {
-        var appName = SystemFoldersNames.Application;
+        const string appName = SystemFoldersNames.Application;
         
         var appDataDirectory = Environment.OSVersion.Platform switch
         {
@@ -77,10 +77,14 @@ public static class AppData
         File.WriteAllBytes(rsa, desEncryptKey);
     }
     
-    public static async Task SaveEncryptedSystemFile(string jsonContent, string encryptedFilePath)
+    public static async Task SaveEncryptedFile(string jsonContent, string encryptedFilePath)
     {
         var data = Encoding.UTF8.GetBytes(jsonContent);
-        
+        await SaveEncryptedFile(data, encryptedFilePath);
+    }
+    
+    public static async Task SaveEncryptedFile(byte[] data, string encryptedFilePath)
+    {
         var appDataDirectory = GetAppDataDirectory();
         var keysDirectory = Path.Combine(appDataDirectory, KeysFolder);
         
@@ -96,10 +100,24 @@ public static class AppData
 
         await File.WriteAllBytesAsync(encryptedFilePath, encryptedData);
     }
-
-    // todo: save encrypted user simple attachment 
     
-    public static async Task<T?> ReadEncryptedSystemFile<T>(string filePath)
+    public static async Task<T?> ReadEncryptedFile<T>(string filePath)
+    {
+        var decryptedData = await ReadEncryptedFileData(filePath);
+        
+        var decryptedJson = Encoding.UTF8.GetString(decryptedData);
+        try
+        {
+            return JsonConvert.DeserializeObject<T>(decryptedJson);
+        }
+        catch (JsonException ex)
+        {
+            Console.WriteLine($"Error deserializing JSON: {ex.Message}");
+            throw;
+        }
+    }
+    
+    public static async Task<byte[]> ReadEncryptedFileData(string filePath)
     {
         var appDataDirectory = GetAppDataDirectory();
         var keysDirectory = Path.Combine(appDataDirectory, KeysFolder);
@@ -116,15 +134,6 @@ public static class AppData
         var encryptedData = await File.ReadAllBytesAsync(filePath);
         var decryptedData = Encrypter.Decrypt(encryptedData, decryptedDesKey, iv);
         
-        var decryptedJson = Encoding.UTF8.GetString(decryptedData);
-        try
-        {
-            return JsonConvert.DeserializeObject<T>(decryptedJson);
-        }
-        catch (JsonException ex)
-        {
-            Console.WriteLine($"Error deserializing JSON: {ex.Message}");
-            throw;
-        }
+        return decryptedData;
     }
 }

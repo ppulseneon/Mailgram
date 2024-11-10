@@ -1,4 +1,5 @@
-﻿using Mailgram.Server.Models;
+﻿using Mailgram.Server.Enums;
+using Mailgram.Server.Models;
 using Mailgram.Server.Models.Responses;
 using MimeKit;
 
@@ -16,7 +17,7 @@ public static class MessageMapper
         return new MessagesResponse(messages);
     }
     
-    public static Message ToMessage(this MimeMessage mimeMessage, uint messageUniqueId)
+    public static Message ToMessage(this MimeMessage mimeMessage, uint messageUniqueId, Folders folder = Folders.Incoming, List<string>? attachments = null)
     {
         var message = new Message
         {
@@ -26,6 +27,8 @@ public static class MessageMapper
             Subject = mimeMessage.Subject,
             Date = mimeMessage.Date.DateTime,
             HtmlContent = string.Empty,
+            Folder = folder,
+            AttachmentFiles = attachments ?? []
         };
 
         switch (mimeMessage.Body)

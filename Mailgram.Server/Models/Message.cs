@@ -8,6 +8,7 @@ public class Message
     public uint Id { get; set; }
     public bool IsEncrypted { get; set; } = false;
     public bool IsSigned { get; set; } = false;
+    public bool IsSeen { get; set; } = false;
     public required string From { get; set; } 
     public required string To { get; set; }
     public required string Subject { get; set; }

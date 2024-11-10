@@ -3,7 +3,7 @@ import '../../assets/css/Folders.css'
 import SettingsButton from './SettingsButton'
 
 import { IoSend } from "react-icons/io5";
-import { RiFolderSharedFill } from "react-icons/ri";
+import {RiContactsBook2Fill, RiFolderSharedFill} from "react-icons/ri";
 import { RiFolderReceivedFill } from "react-icons/ri";
 import { IoBookmarkSharp } from "react-icons/io5";
 import { FaDraftingCompass } from "react-icons/fa";
@@ -13,8 +13,6 @@ import { FolderContext } from '../../hooks/FolderContext';
 import { FoldersList } from '../../enums/FoldersList';
 
 function Folders(): JSX.Element {
-    // todo: переписать под https://kaneru.me/react-scrollable-container/
-
     const { folder, setFolder } = useContext(FolderContext);
 
     const handleSendButtonClick = () => {
@@ -29,8 +27,8 @@ function Folders(): JSX.Element {
         setFolder(FoldersList.Favorite);
     }
 
-    const handleSendedFolderClick = () => {
-        setFolder(FoldersList.Sended);
+    const handleSentFolderClick = () => {
+        setFolder(FoldersList.Sent);
     }
 
     const handleDeletedFolderClick = () => {
@@ -41,6 +39,10 @@ function Folders(): JSX.Element {
         setFolder(FoldersList.Drafted);
     }
 
+    const handleContactsFolderClick = () => {
+        setFolder(FoldersList.Contacts);
+    }
+    
     return <div className="folders-container">
         <div>
             <SettingsButton />
@@ -56,9 +58,9 @@ function Folders(): JSX.Element {
                 isActive={folder === FoldersList.Received} />
 
             <FolderButton icon={<RiFolderSharedFill
-                className={folder === FoldersList.Sended ? "folder-icon-active" : "folder-icon"}/>}
-                text="Отправленные" onClick={handleSendedFolderClick}
-                isActive={folder === FoldersList.Sended} />
+                className={folder === FoldersList.Sent ? "folder-icon-active" : "folder-icon"}/>}
+                text="Отправленные" onClick={handleSentFolderClick}
+                isActive={folder === FoldersList.Sent} />
 
             <FolderButton icon={<IoBookmarkSharp
                 className={folder === FoldersList.Favorite ? "folder-icon-active" : "folder-icon"}/>}
@@ -74,6 +76,11 @@ function Folders(): JSX.Element {
                 className={folder === FoldersList.Drafted ? "folder-icon-active" : "folder-icon"}/>}
                 text="Черновики" onClick={handleDraftedFolderClick}
                 isActive={folder === FoldersList.Drafted} />
+
+            <FolderButton icon={<RiContactsBook2Fill
+                className={folder === FoldersList.Contacts ? "folder-icon-active" : "folder-icon"}/>}
+                          text="Черновики" onClick={handleContactsFolderClick}
+                          isActive={folder === FoldersList.Contacts} />
         </div>
     </div>
 }

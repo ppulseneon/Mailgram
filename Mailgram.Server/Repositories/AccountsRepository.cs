@@ -1,3 +1,4 @@
+using Mailgram.Server.Constants;
 using Mailgram.Server.Models;
 using Mailgram.Server.Repositories.Interfaces;
 using Mailgram.Server.Utility;
@@ -7,13 +8,8 @@ namespace Mailgram.Server.Repositories;
 
 public class AccountsRepository: IAccountsRepository
 {
-    private readonly string _basePath;
-    
-    public AccountsRepository()
-    {
-        _basePath = AppData.GetAppDataDirectory();
-    }
-    
+    private readonly string _basePath = AppData.GetAppDataDirectory();
+
     public async Task CreateAccountAsync(Account account)
     {
         account.Id = Guid.NewGuid();
@@ -28,10 +24,11 @@ public class AccountsRepository: IAccountsRepository
         var accountDirectoryPath = Path.Combine(_basePath, account.Id.ToString());
         var accountFilePath = Path.Combine(accountDirectoryPath, account.Id.ToString());
         
-        Directory.CreateDirectory(accountDirectoryPath);
-        
+        // Инициализируем базовые папки пользователя
+        CreateBaseUserDirectories(accountDirectoryPath);
+
         var jsonString = JsonConvert.SerializeObject(account);
-        await AppData.SaveEncryptedSystemFile(jsonString, accountFilePath);
+        await AppData.SaveEncryptedFile(jsonString, accountFilePath);
     }
 
     public async Task<List<Account>> GetAccountsAsync()
@@ -47,7 +44,7 @@ public class AccountsRepository: IAccountsRepository
             if (!File.Exists(filePath)) continue;
             try
             {
-                var account = await AppData.ReadEncryptedSystemFile<Account>(filePath);
+                var account = await AppData.ReadEncryptedFile<Account>(filePath);
 
                 if (account != null)
                 {

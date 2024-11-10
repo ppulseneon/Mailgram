@@ -2,6 +2,7 @@ using Mailgram.Server.Repositories;
 using Mailgram.Server.Repositories.Interfaces;
 using Mailgram.Server.Services;
 using Mailgram.Server.Services.Interface;
+using Mailgram.Server.Services.Interfaces;
 
 namespace Mailgram.Server.Extensions;
 
@@ -18,6 +19,6 @@ public static class ServiceCollectionExtension
     {
         return services
             .AddScoped<IAccountService, AccountService>()
-            .AddScoped<IEmailReaderService, EmailReaderService>();
+            .AddScoped<IEmailService, EmailService>();
     }
 }
