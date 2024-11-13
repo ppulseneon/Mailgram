@@ -88,7 +88,7 @@ public class AccountsRepository: IAccountsRepository
         return accounts.FirstOrDefault(a => a.Id == id);
     }
 
-    private void CreateBaseUserDirectories(string accountDirectoryPath)
+    private static void CreateBaseUserDirectories(string accountDirectoryPath)
     {
         // Создаем папку пользователя 
         Directory.CreateDirectory(accountDirectoryPath);

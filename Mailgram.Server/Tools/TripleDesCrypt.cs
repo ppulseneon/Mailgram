@@ -2,7 +2,7 @@
 
 namespace Mailgram.Server.Tools;
 
-public static class Encrypter
+public static class TripleDesCrypt
 {
     public static byte[] Encrypt(byte[] data, byte[] key, byte[] iv)
     {

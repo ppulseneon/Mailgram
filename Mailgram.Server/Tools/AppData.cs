@@ -52,24 +52,24 @@ public static class AppData
         var desKey = des.Key;
         var iv = des.IV;
 
-        // Сохраняем DES-ключ и IV в файлы
+        // Сохраняем IV в файл
         var ivPath = Path.Combine(keysDirectory, IvFilename);
         File.WriteAllBytes(ivPath, iv);
         
         // Генерация приватного и публичного ключа при помощи RSA
         using RSACryptoServiceProvider rsaCryptoServiceProvider = new();
-        var rsaParameters = rsaCryptoServiceProvider.ExportParameters(true);
 
-        // Экспорт публичного
+        // Экспорт публичного RSA ключа
         var publicKeyXml = rsaCryptoServiceProvider.ToXmlString(false);
         var publicPath = Path.Combine(keysDirectory, PublicKeyFilename);
         File.WriteAllText(publicPath, publicKeyXml);
 
-        // Экспорт приватного 
+        // Экспорт приватного RSA ключа
         var privateKeyXml = rsaCryptoServiceProvider.ToXmlString(true);
         var privatePath = Path.Combine(keysDirectory, PrivateKeyFilename);
         File.WriteAllText(privatePath, privateKeyXml);
         
+        // Экспорт зашифрованного DES ключа
         var desEncryptKey = rsaCryptoServiceProvider.Encrypt(desKey, RSAEncryptionPadding.Pkcs1);
 
         // Экспортируем зашифрованный dsa key
@@ -92,12 +92,19 @@ public static class AppData
         var desKey = await File.ReadAllBytesAsync(Path.Combine(keysDirectory, DesEncryptedFilename));
         var privateKeyXml = await File.ReadAllTextAsync(Path.Combine(keysDirectory, PrivateKeyFilename));
         
+        // Создаем RSA провайдер
         using var rsa = new RSACryptoServiceProvider();
+        
+        // Экспортируем приватный ключ
         rsa.FromXmlString(privateKeyXml);
+        
+        // Дешифруем зашифрованный при инициализации ключ DES
         var decryptedDesKey = rsa.Decrypt(desKey, RSAEncryptionPadding.Pkcs1);
         
-        var encryptedData = Encrypter.Encrypt(data, decryptedDesKey, iv);
+        // Шифруем расшифрованным DES ключом данные файла
+        var encryptedData = TripleDesCrypt.Encrypt(data, decryptedDesKey, iv);
 
+        // Записываем в файл зашифрованный файл
         await File.WriteAllBytesAsync(encryptedFilePath, encryptedData);
     }
     
@@ -126,13 +133,18 @@ public static class AppData
         var iv  = await File.ReadAllBytesAsync(Path.Combine(keysDirectory, IvFilename));
         var desKey = await File.ReadAllBytesAsync(Path.Combine(keysDirectory, DesEncryptedFilename));
 
+        // Создаем RSA провайдер
         using var rsa = new RSACryptoServiceProvider();
         rsa.FromXmlString(privateKeyXml);
         
+        // Дешифруем зашифрованный при инициализации ключ DES
         var decryptedDesKey = rsa.Decrypt(desKey, RSAEncryptionPadding.Pkcs1);
         
+        // Получаем зашифрованные данные файла
         var encryptedData = await File.ReadAllBytesAsync(filePath);
-        var decryptedData = Encrypter.Decrypt(encryptedData, decryptedDesKey, iv);
+        
+        // Дешифруем зашифрованные файлы расшифрованным DES-ключом 
+        var decryptedData = TripleDesCrypt.Decrypt(encryptedData, decryptedDesKey, iv);
         
         return decryptedData;
     }
