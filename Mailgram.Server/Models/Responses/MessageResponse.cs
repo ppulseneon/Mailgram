@@ -12,4 +12,8 @@ public class MessageResponse(Message message)
     public DateTime Date { get; set; } = message.Date;
     public Folders Folder { get; set; } = message.Folder;
     public List<string> Attachments { get; set; } = message.AttachmentFiles;
+    public bool IsSigned { get; set; } = message.IsSigned;
+    public bool IsEnrypted { get; set; } = message.IsEncrypted;
+    public bool IsSignedRight { get; set; } = message.IsSignedRight;
+    public bool IsEnryptedRight { get; set; } = message.IsEncryptedRight;
 }

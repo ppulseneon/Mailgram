@@ -12,13 +12,16 @@ public static class ServiceCollectionExtension
     {
         return services
             .AddSingleton<IMessagesRepository, MessagesRepository>()
-            .AddSingleton<IAccountsRepository, AccountsRepository>();
+            .AddSingleton<IAccountsRepository, AccountsRepository>()
+            .AddSingleton<IContactsRepository, ContactsRepository>();
     }
     
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
         return services
             .AddScoped<IAccountService, AccountService>()
-            .AddScoped<IEmailService, EmailService>();
+            .AddScoped<IEmailService, EmailService>()
+            .AddScoped<IContactsService, ContactsService>()
+            .AddSingleton<IEncryptService, EncryptService>();
     }
 }

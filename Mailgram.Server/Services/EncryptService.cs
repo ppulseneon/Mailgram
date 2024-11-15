@@ -6,17 +6,36 @@ namespace Mailgram.Server.Services;
 
 public class EncryptService: IEncryptService
 {
-    public Task EncryptMessage()
+    public async Task EncryptMessage()
     {
         throw new NotImplementedException();
     }
 
     public async Task EncryptFile(string filepath)
     {
-
+        throw new NotImplementedException();
     }
 
-    private async Task GenerateDES(string filepath)
+    public async Task<string> GenerateRsa(string filepath, string privateKeyName)
+    {
+        // Получаем директорию для сохранения результатов шифрования
+        var folder = FilePathHelper.GetPathFromFilepath(filepath);
+        
+        // Генерация приватного и публичного ключа при помощи RSA
+        using RSACryptoServiceProvider rsaCryptoServiceProvider = new();
+
+        // Экспорт публичного RSA ключа
+        var publicKeyXml = rsaCryptoServiceProvider.ToXmlString(false);
+
+        // Экспорт приватного RSA ключа
+        var privateKeyXml = rsaCryptoServiceProvider.ToXmlString(true);
+        var privatePath = Path.Combine(filepath, privateKeyName);
+        await File.WriteAllTextAsync(privatePath, privateKeyXml);
+        
+        return publicKeyXml;
+    }
+    
+    private async Task GenerateDes(string filepath)
     {
         // Получаем директорию для сохранения результатов шифрования
         var folder = FilePathHelper.GetPathFromFilepath(filepath);
