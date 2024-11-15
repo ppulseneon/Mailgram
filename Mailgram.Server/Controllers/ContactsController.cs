@@ -1,4 +1,5 @@
 ﻿using Mailgram.Server.Extensions.Mappers;
+using Mailgram.Server.Models.Requests;
 using Mailgram.Server.Models.Responses;
 using Mailgram.Server.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -19,5 +20,12 @@ public class ContactsController(IContactsService contactsService): ControllerBas
     {
         var contacts = await contactsService.GetAll(userId);
         return Ok(contacts.ToResponse());
+    }
+
+    [HttpPost(Name = "CreateContact")]
+    public async Task<ActionResult<ContactResponse>> Create(ContactRequest request)
+    {
+        var contact = await contactsService.GetAll();
+        return Ok(contact.ToResponse());
     }
 }
