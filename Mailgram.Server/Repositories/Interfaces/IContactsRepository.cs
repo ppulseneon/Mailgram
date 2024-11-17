@@ -8,4 +8,5 @@ public interface IContactsRepository
     Task SaveContact(Guid userId, Contact contact);
     Task<(string, string)> GenerateContactKeys(Guid id, string email);
     Task ImportContactKeys(Guid userId, string email, string publicRsaKey, string publicEcpKey);
+    (string, string) GetPublicKeysPaths(Guid userId, string email);
 }

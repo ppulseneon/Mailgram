@@ -10,6 +10,7 @@ namespace Mailgram.Server.Utility;
 public static class AppData
 {
     private const string KeysFolder = "keys";
+    private const string Temp = "temp";
     private const string DesEncryptedFilename = "encrypt.key";  
     private const string PrivateKeyFilename = "private.key";
     private const string PublicKeyFilename = "public.key";
@@ -47,7 +48,8 @@ public static class AppData
         }
         
         Directory.CreateDirectory(keysDirectory);
-
+        Directory.CreateDirectory(Temp);
+        
         using var des = TripleDES.Create();
         var desKey = des.Key;
         var iv = des.IV;
@@ -75,6 +77,16 @@ public static class AppData
         // Экспортируем зашифрованный dsa key
         var rsa = Path.Combine(keysDirectory, DesEncryptedFilename);
         File.WriteAllBytes(rsa, desEncryptKey);
+    }
+
+    public static string CreateSubFolder()
+    {
+        var appDataDirectory = GetAppDataDirectory();
+        var tempDirectory = Path.Combine(appDataDirectory, Temp);
+        var path = Path.Combine(tempDirectory, Guid.NewGuid().ToString());
+        Directory.CreateDirectory(path);
+
+        return path;
     }
     
     public static async Task SaveEncryptedFile(string jsonContent, string encryptedFilePath)

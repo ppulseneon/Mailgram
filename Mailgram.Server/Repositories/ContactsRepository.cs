@@ -88,4 +88,17 @@ public class ContactsRepository(IEncryptService encryptService): IContactsReposi
         await File.WriteAllTextAsync(publicRsaFilename, publicRsaKey);
         await File.WriteAllTextAsync(publicEcpFilename, publicEcpKey);
     }
+
+    public (string, string) GetPublicKeysPaths(Guid userId, string email)
+    {
+        var userContactsDirectory = Path.Combine(AppData.GetAppDataDirectory(), userId.ToString(), "contacts");
+        
+        // Получаем путь к папке контакта
+        var contactDirectory = Path.Combine(userContactsDirectory, email);
+        
+        var publicRsaFilename = Path.Combine(contactDirectory, ".rsa");
+        var publicEcpFilename = Path.Combine(contactDirectory, ".ecp");
+        
+        return (publicRsaFilename, publicEcpFilename);
+    }
 }

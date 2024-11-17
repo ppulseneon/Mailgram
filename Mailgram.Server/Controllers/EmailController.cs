@@ -90,6 +90,11 @@ public class EmailController(IAccountService accountService, IEmailService email
         {
             return NotFound("Аккаунт не найден");
         }
+
+        if (request.IsEncrypt || request.IsSign)
+        {
+            request = await emailService.CreateContactMessage(account, request);
+        }
         
         var result = await emailService.SendMessage(account, request);
         

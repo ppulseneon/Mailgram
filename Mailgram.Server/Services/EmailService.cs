@@ -5,6 +5,7 @@ using Mailgram.Server.Models.Requests;
 using Mailgram.Server.Repositories.Interfaces;
 using Mailgram.Server.Services.Interfaces;
 using Mailgram.Server.Tools;
+using Mailgram.Server.Utility;
 using MailKit;
 using MailKit.Net.Imap;
 using MailKit.Search;
@@ -14,7 +15,7 @@ using SmtpClient = MailKit.Net.Smtp.SmtpClient;
 
 namespace Mailgram.Server.Services;
 
-public class EmailService(IMessagesRepository messagesRepository, IContactsRepository contactsRepository) : IEmailService
+public class EmailService(IMessagesRepository messagesRepository, IContactsRepository contactsRepository, IEncryptService encryptService) : IEmailService
 {
     public async Task SyncAsync(Account account)
     {
@@ -254,7 +255,7 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
         return message;
     }
 
-    public async Task<Message?> SendMessage(Account account, SendMessageRequest request, bool isSwap = false, bool isContactMessage = false)
+    public async Task<Message?> SendMessage(Account account, SendMessageRequest request, bool isSwap = false)
     {
         var domain = account.Platform;
 
@@ -278,6 +279,14 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
                     ContentType.Parse(file.ContentType));
             }
         }
+        
+        if (request.EncryptedAttachments.Count != 0)
+        {
+            foreach (var file in request.EncryptedAttachments)
+            {
+                await bodyBuilder.Attachments.AddAsync(file);
+            }
+        }
 
         message.Body = bodyBuilder.ToMessageBody();
 
@@ -286,9 +295,14 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
             message.Headers.Add("X-Swap-Flag", "true");
         }
         
-        if (isContactMessage)
+        if (request.IsEncrypt)
         {
-            message.Headers.Add("X-ContactMsg-Flag", "true");
+            message.Headers.Add("X-Encrypt-Flag", "true");
+        }
+        
+        if (request.IsSign)
+        {
+            message.Headers.Add("X-Signed-Flag", "true");
         }
         
         using var client = new SmtpClient();
@@ -298,7 +312,6 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
             await client.AuthenticateAsync(account.Login, account.Password).ConfigureAwait(false);
             await client.SendAsync(message);
             await client.DisconnectAsync(true);
-
         }
         catch (Exception ex)
         {
@@ -336,8 +349,52 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
         
         return result;
     }
-    
-    public Task<Message?> SendContactAction(Account account, SendMessageRequest request)
+
+    public async Task<SendMessageRequest> CreateContactMessage(Account account, SendMessageRequest request)
+    {
+        var result = new SendMessageRequest
+        {
+            UserId = request.UserId,
+            Subject = request.Subject,
+            To = request.To,
+            Message = string.Empty,
+            IsEncrypt = request.IsEncrypt,
+            IsSign = request.IsSign,
+            Attachments = [],
+            EncryptedAttachments = []
+        };
+
+        var (publicRsa, publicEcp) = contactsRepository.GetPublicKeysPaths(account.Id, request.To);
+        var tempFolder = AppData.CreateSubFolder();
+        
+        if (request.IsEncrypt)
+        {
+            var (dsaKey, iv) = await encryptService.GenerateTripleDes();
+            
+            result.Message = await encryptService.EncryptMessage(request.Message, dsaKey, iv);
+
+            var tempEncryptedDsaPath = await encryptService.EncryptKey(dsaKey, tempFolder, publicRsa);
+            result.EncryptedAttachments.Add(tempEncryptedDsaPath);
+
+            if (request.Attachments != null)
+            {
+                foreach (var attachment in request.Attachments)
+                {
+                    var encryptedAttachment = await encryptService.EncryptFile(attachment, tempFolder, dsaKey, iv);
+                    result.EncryptedAttachments.Add(encryptedAttachment);
+                }
+            }
+        }
+
+        if (request.IsSign)
+        {
+            
+        }
+        
+        return result;
+    }
+
+    public Task<Message> ReadContactMessage(Account account, Message message)
     {
         throw new NotImplementedException();
     }
