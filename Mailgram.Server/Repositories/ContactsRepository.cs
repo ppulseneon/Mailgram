@@ -1,4 +1,5 @@
-﻿using Mailgram.Server.Models;
+﻿using Mailgram.Server.Enums;
+using Mailgram.Server.Models;
 using Mailgram.Server.Repositories.Interfaces;
 using Mailgram.Server.Services.Interfaces;
 using Mailgram.Server.Utility;
@@ -16,7 +17,7 @@ public class ContactsRepository(IEncryptService encryptService): IContactsReposi
         // Получаем путь к контакту
         var contactDirectory = Path.Combine(userContactsDirectory, contact.Email);
         
-        // Получаем путь к сообщению
+        // Получаем путь к файлу контакта
         var contactFilePath = Path.Combine(contactDirectory, ".contact");
         
         // Создаем путь к сообщению
@@ -65,8 +66,21 @@ public class ContactsRepository(IEncryptService encryptService): IContactsReposi
         // Получаем путь к папке контактов
         var userContactsDirectory = Path.Combine(AppData.GetAppDataDirectory(), userId.ToString(), "contacts");
         
-        // Получаем путь к контакту
+        // Получаем путь к папке контакта
         var contactDirectory = Path.Combine(userContactsDirectory, email);
+        
+        // Получаем путь к файлу контакта
+        var contactFilePath = Path.Combine(contactDirectory, ".contact");
+        
+        var contactFile = await AppData.ReadEncryptedFile<Contact>(contactFilePath);
+
+        contactFile!.Status = ExchangeStatus.Accept;
+        
+        // Сериализируем сообщение
+        var jsonMessage = JsonConvert.SerializeObject(contactFile);
+            
+        // Сохраняем сообщение с системными ключами
+        await AppData.SaveEncryptedFile(jsonMessage, contactFilePath);
         
         var publicRsaFilename = Path.Combine(contactDirectory, ".rsa");
         var publicEcpFilename = Path.Combine(contactDirectory, ".ecp");

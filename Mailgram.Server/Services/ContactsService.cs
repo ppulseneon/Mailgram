@@ -41,4 +41,31 @@ public class ContactsService(IContactsRepository contactsRepository, IEmailServi
         
         return contact;
     }
+
+    public async Task Accept(Account account, ContactRequest request)
+    {
+        var contact = request.ToContact();
+
+        contact.Status = ExchangeStatus.Accept;
+        await contactsRepository.SaveContact(account.Id, contact);
+        
+        var (rsa, ecp) = await contactsRepository.GenerateContactKeys(account.Id, contact.Email);
+        
+        var contactSwap = new ContactSwap
+        {
+            From = account.Login.AppendDomain(account.Platform),
+            SwapStatus = SwapStatus.Response,
+            PublicRsa = rsa,
+            PublicEcp = ecp
+        };
+        
+        var message = new SendMessageRequest
+        {
+            UserId = account.Id,
+            To = request.Email,
+            Message = JsonConvert.SerializeObject(contactSwap)
+        };
+        
+        await emailService.SendMessage(account, message, isSwap: true);
+    }
 }

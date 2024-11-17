@@ -9,13 +9,8 @@ namespace Mailgram.Server.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ContactsController(IContactsService contactsService, IAccountService accountService): ControllerBase
+public class ContactsController(IContactsService contactsService, IAccountService accountService) : ControllerBase
 {
-    // todo: contacts reqeuest
-    // todo: send contact add
-    // todo: access contact
-    // todo: deny contact
-    
     [HttpGet(Name = "GetContacts")]
     public async Task<ActionResult<ContactsResponse>> Get(Guid userId)
     {
@@ -30,10 +25,39 @@ public class ContactsController(IContactsService contactsService, IAccountServic
 
         if (account is null)
         {
-            return NotFound();
+            return NotFound("Аккаунт не найден");
         }
-        
+
         var contact = await contactsService.Add(account, request);
         return Ok(contact.ToResponse());
+    }
+
+    [HttpPost("accept", Name = "AcceptContact")]
+    public async Task<ActionResult<ContactResponse>> Accept(Guid userId, string email)
+    {
+        var account = await accountService.Get(userId);
+        
+        if (account is null)
+        {
+            return NotFound("Аккаунт не найден");
+        }
+        
+        var contacts = await contactsService.GetAll(userId);
+
+        var findContact = contacts.FirstOrDefault(x => x.Email == email);
+
+        if (findContact is null)
+        {
+            return NotFound("Контакт не найден");
+        }
+
+        var request = new ContactRequest
+        {
+            Email = email
+        };
+        
+        await contactsService.Accept(account!, request);
+        
+        return Ok(findContact.ToResponse());
     }
 }

@@ -7,4 +7,5 @@ public interface IContactsService
 {
     Task<List<Contact>> GetAll(Guid userId);
     Task<Contact> Add(Account account, ContactRequest request);
+    Task Accept(Account account, ContactRequest request);
 }

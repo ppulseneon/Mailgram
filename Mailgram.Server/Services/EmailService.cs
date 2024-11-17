@@ -70,9 +70,9 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
                     var seen = false;
 
                     // Обработка реквеста
-                    if (summary.Keywords.Contains("X-Swap-Flag"))
+                    if (mimeMessage.Headers.Contains("X-Swap-Flag"))
                     {
-                        var contact = JsonConvert.DeserializeObject<ContactSwap>(mimeMessage.TextBody);
+                        var contact = JsonConvert.DeserializeObject<ContactSwap>(mimeMessage.HtmlBody);
         
                         var importedContact = new Contact
                         {
@@ -81,6 +81,11 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
                         };
 
                         if (contact.SwapStatus == SwapStatus.Request)
+                        {
+                            await contactsRepository.SaveContact(account.Id, importedContact);
+                        }
+                        
+                        if (contact.SwapStatus == SwapStatus.Response)
                         {
                             await contactsRepository.SaveContact(account.Id, importedContact);
                         }
@@ -130,8 +135,6 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
                 {
                     var messageUid = new UniqueId(email.Id);
                     var message = await client.Inbox.GetMessageAsync(messageUid, CancellationToken.None);
-                    //var message = inbox.First(m => m.MessageId == messageUid.ToString());
-                    
                     
                     foreach (var attachment in message.Attachments)
                     {
