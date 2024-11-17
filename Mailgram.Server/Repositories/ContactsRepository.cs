@@ -14,13 +14,13 @@ public class ContactsRepository(IEncryptService encryptService): IContactsReposi
         var userContactsDirectory = Path.Combine(AppData.GetAppDataDirectory(), userId.ToString(), "contacts");
         
         // Получаем путь к контакту
-        var contactDirectory = Path.Combine(userContactsDirectory, Guid.NewGuid().ToString());
+        var contactDirectory = Path.Combine(userContactsDirectory, contact.Email);
         
         // Получаем путь к сообщению
         var contactFilePath = Path.Combine(contactDirectory, ".contact");
         
         // Создаем путь к сообщению
-        Directory.CreateDirectory(contactFilePath);
+        Directory.CreateDirectory(contactDirectory);
         
         // Сериализируем сообщение
         var jsonMessage = JsonConvert.SerializeObject(contact);
@@ -46,13 +46,13 @@ public class ContactsRepository(IEncryptService encryptService): IContactsReposi
         return contacts;
     }
 
-    public async Task<(string, string)> GenerateContactKeys(Guid userId)
+    public async Task<(string, string)> GenerateContactKeys(Guid userId, string email)
     {
         // Получаем путь к папке контактов
         var userContactsDirectory = Path.Combine(AppData.GetAppDataDirectory(), userId.ToString(), "contacts");
         
         // Получаем путь к контакту
-        var contactDirectory = Path.Combine(userContactsDirectory, Guid.NewGuid().ToString());
+        var contactDirectory = Path.Combine(userContactsDirectory, email);
         
         var publicRsa = await encryptService.GenerateRsa(contactDirectory, ".prsa");
         var publicEcp = await encryptService.GenerateRsa(contactDirectory, ".pecp");
@@ -60,8 +60,18 @@ public class ContactsRepository(IEncryptService encryptService): IContactsReposi
         return (publicRsa, publicEcp);
     }
 
-    public async Task ImportContactKeys()
+    public async Task ImportContactKeys(Guid userId, string email, string publicRsaKey, string publicEcpKey)
     {
+        // Получаем путь к папке контактов
+        var userContactsDirectory = Path.Combine(AppData.GetAppDataDirectory(), userId.ToString(), "contacts");
         
+        // Получаем путь к контакту
+        var contactDirectory = Path.Combine(userContactsDirectory, email);
+        
+        var publicRsaFilename = Path.Combine(contactDirectory, ".rsa");
+        var publicEcpFilename = Path.Combine(contactDirectory, ".ecp");
+        
+        await File.WriteAllTextAsync(publicRsaFilename, publicRsaKey);
+        await File.WriteAllTextAsync(publicEcpFilename, publicEcpKey);
     }
 }

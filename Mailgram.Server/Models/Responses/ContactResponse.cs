@@ -2,8 +2,8 @@
 
 namespace Mailgram.Server.Models.Responses;
 
-public class ContactResponse
+public class ContactResponse(Contact contact)
 {
-    public string Email { get; set; }
-    public ExchangeStatus Status { get; set; }
+    public string Email { get; set; } = contact.Email;
+    public ExchangeStatus Status { get; set; } = contact.Status;
 }

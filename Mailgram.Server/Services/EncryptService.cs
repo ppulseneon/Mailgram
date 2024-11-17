@@ -29,6 +29,7 @@ public class EncryptService: IEncryptService
 
         // Экспорт приватного RSA ключа
         var privateKeyXml = rsaCryptoServiceProvider.ToXmlString(true);
+        
         var privatePath = Path.Combine(filepath, privateKeyName);
         await File.WriteAllTextAsync(privatePath, privateKeyXml);
         

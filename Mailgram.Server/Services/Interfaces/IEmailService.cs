@@ -9,7 +9,6 @@ public interface IEmailService
     Task<List<Message>> GetAll(Guid userId);
     Task<Message?> ChangeStarred(Account account, uint messageId);
     Task<Message?> DeleteEmail(Account account, uint messageId);
-    Task<Message?> SendMessage(Account account, SendMessageRequest request);
-    Task<Message?> SendContactAction(Account account, SendMessageRequest request);
+    Task<Message?> SendMessage(Account account, SendMessageRequest request, bool isSwap = false, bool isContactMessage = false);
     Task<string> GetDecryptAttachment(Guid userId, uint messageId, string attachmentName);
 }

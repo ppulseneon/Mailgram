@@ -18,11 +18,7 @@ public static class ContactMapper
 
     public static ContactResponse ToResponse(this Contact contact)
     {
-        return new ContactResponse
-        {
-            Email = contact.Email,
-            Status = contact.Status,
-        };
+        return new ContactResponse(contact);
     }
     
     public static ContactsResponse ToResponse(this List<Contact> contacts)

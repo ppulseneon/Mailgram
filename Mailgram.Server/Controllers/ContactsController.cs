@@ -1,6 +1,7 @@
 ﻿using Mailgram.Server.Extensions.Mappers;
 using Mailgram.Server.Models.Requests;
 using Mailgram.Server.Models.Responses;
+using Mailgram.Server.Services.Interface;
 using Mailgram.Server.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,7 +9,7 @@ namespace Mailgram.Server.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ContactsController(IContactsService contactsService): ControllerBase
+public class ContactsController(IContactsService contactsService, IAccountService accountService): ControllerBase
 {
     // todo: contacts reqeuest
     // todo: send contact add
@@ -23,9 +24,16 @@ public class ContactsController(IContactsService contactsService): ControllerBas
     }
 
     [HttpPost(Name = "CreateContact")]
-    public async Task<ActionResult<ContactResponse>> Create(ContactRequest request)
+    public async Task<ActionResult<ContactResponse>> Create(Guid userId, ContactRequest request)
     {
-        var contact = await contactsService.GetAll();
+        var account = await accountService.Get(userId);
+
+        if (account is null)
+        {
+            return NotFound();
+        }
+        
+        var contact = await contactsService.Add(account, request);
         return Ok(contact.ToResponse());
     }
 }

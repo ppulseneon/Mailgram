@@ -1,4 +1,3 @@
-using System.Net.Mail;
 using Mailgram.Server.Enums;
 using Mailgram.Server.Extensions.Mappers;
 using Mailgram.Server.Models;
@@ -10,11 +9,12 @@ using MailKit;
 using MailKit.Net.Imap;
 using MailKit.Search;
 using MimeKit;
+using Newtonsoft.Json;
 using SmtpClient = MailKit.Net.Smtp.SmtpClient;
 
 namespace Mailgram.Server.Services;
 
-public class EmailService(IMessagesRepository messagesRepository) : IEmailService
+public class EmailService(IMessagesRepository messagesRepository, IContactsRepository contactsRepository) : IEmailService
 {
     public async Task SyncAsync(Account account)
     {
@@ -69,6 +69,26 @@ public class EmailService(IMessagesRepository messagesRepository) : IEmailServic
                     var folder = Folders.Incoming;
                     var seen = false;
 
+                    // Обработка реквеста
+                    if (summary.Keywords.Contains("X-Swap-Flag"))
+                    {
+                        var contact = JsonConvert.DeserializeObject<ContactSwap>(mimeMessage.TextBody);
+        
+                        var importedContact = new Contact
+                        {
+                            Email = contact!.From,
+                            Status = ExchangeStatus.Received
+                        };
+
+                        if (contact.SwapStatus == SwapStatus.Request)
+                        {
+                            await contactsRepository.SaveContact(account.Id, importedContact);
+                        }
+        
+                        await contactsRepository.ImportContactKeys(account.Id, contact.From, contact.PublicRsa, contact.PublicEcp);
+                        continue;
+                    }
+                    
                     if (summary.Flags.HasValue && summary.Flags.Value.HasFlag(MessageFlags.Flagged))
                     {
                         folder = Folders.Favorites;
@@ -231,7 +251,7 @@ public class EmailService(IMessagesRepository messagesRepository) : IEmailServic
         return message;
     }
 
-    public async Task<Message?> SendMessage(Account account, SendMessageRequest request)
+    public async Task<Message?> SendMessage(Account account, SendMessageRequest request, bool isSwap = false, bool isContactMessage = false)
     {
         var domain = account.Platform;
 
@@ -258,6 +278,16 @@ public class EmailService(IMessagesRepository messagesRepository) : IEmailServic
 
         message.Body = bodyBuilder.ToMessageBody();
 
+        if (isSwap)
+        {
+            message.Headers.Add("X-Swap-Flag", "true");
+        }
+        
+        if (isContactMessage)
+        {
+            message.Headers.Add("X-ContactMsg-Flag", "true");
+        }
+        
         using var client = new SmtpClient();
         try
         {
