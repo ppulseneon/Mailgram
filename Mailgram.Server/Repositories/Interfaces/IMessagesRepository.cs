@@ -7,8 +7,9 @@ public interface IMessagesRepository
 {
     Task SaveMessage(Guid userId, Message message);
     Task SaveMessages(Guid userId, List<Message> messages);
-    Task SaveAttachment(Guid userId, uint messageId, string filename, byte[] attachment);
+    Task SaveAttachment(Guid userId, int messageId, string filename, byte[] attachment);
     Task<List<Message>> GetMessages(Guid userId);
-    Task<Message?> GetMessage(Guid userId, uint messageId);
-    Task<string> GetMessageAttachmentPath(Guid userId, uint messageId, string attachmentName);
+    Task<Message?> GetMessage(Guid userId, int messageId);
+    Task<int> GetLastSentMessageId(Guid id);
+    Task<string> GetMessageAttachmentPath(Guid userId, int messageId, string attachmentName);
 }

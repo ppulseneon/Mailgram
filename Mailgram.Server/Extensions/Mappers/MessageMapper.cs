@@ -17,7 +17,7 @@ public static class MessageMapper
         return new MessagesResponse(messages);
     }
     
-    public static Message ToMessage(this MimeMessage mimeMessage, uint messageUniqueId, Folders folder = Folders.Incoming, List<string>? attachments = null)
+    public static Message ToMessage(this MimeMessage mimeMessage, int messageUniqueId, Folders folder = Folders.Incoming, List<string>? attachments = null)
     {
         var message = new Message
         {

@@ -36,7 +36,7 @@ public class EncryptService: IEncryptService
         await file.CopyToAsync(cs);
         await cs.FlushFinalBlockAsync();
 
-        var resultPath = Path.Combine(subTempFolderName, $"{file.Name}.enc");
+        var resultPath = Path.Combine(subTempFolderName, $"{file.FileName}.enc");
         await File.WriteAllBytesAsync(resultPath, ms.ToArray());
         
         return resultPath;
@@ -76,6 +76,27 @@ public class EncryptService: IEncryptService
         await File.WriteAllBytesAsync(resultPath, encryptedDesa.ToArray());
         
         return resultPath;
+    }
+
+    public async Task<string> SaveIv(byte[] iv, string subTempFolderName)
+    {
+        var resultPath = Path.Combine(subTempFolderName, ".iv");
+        await File.WriteAllBytesAsync(resultPath, iv.ToArray());
+        
+        return resultPath;
+    }
+
+    public async Task<byte[]> DecryptKey(byte[] desKey, string subTempFolderName, string privateRsaKeyPath)
+    {
+        using var rsa = new RSACryptoServiceProvider();
+
+        var publicRsa = await File.ReadAllTextAsync(privateRsaKeyPath);
+        
+        // Экспортируем приватный ключ
+        rsa.FromXmlString(publicRsa);
+        
+        var decryptedDes = rsa.Encrypt(desKey, RSAEncryptionPadding.Pkcs1);
+        return decryptedDes;
     }
 
     public async Task<string> GenerateRsa(string filepath, string privateKeyName)

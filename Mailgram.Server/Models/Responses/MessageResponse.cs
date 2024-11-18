@@ -4,7 +4,7 @@ namespace Mailgram.Server.Models.Responses;
 
 public class MessageResponse(Message message)
 {
-    public uint Id { get; set; } = message.Id;
+    public int Id { get; set; } = message.Id;
     public string From { get; set; } = message.From;
     public string To { get; set; } = message.To;
     public string Subject { get; set; } = message.Subject;

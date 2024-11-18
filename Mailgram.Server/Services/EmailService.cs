@@ -15,7 +15,8 @@ using SmtpClient = MailKit.Net.Smtp.SmtpClient;
 
 namespace Mailgram.Server.Services;
 
-public class EmailService(IMessagesRepository messagesRepository, IContactsRepository contactsRepository, IEncryptService encryptService) : IEmailService
+public class EmailService(IMessagesRepository messagesRepository, IContactsRepository contactsRepository,
+    IEncryptService encryptService) : IEmailService
 {
     public async Task SyncAsync(Account account)
     {
@@ -70,6 +71,9 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
                     var folder = Folders.Incoming;
                     var seen = false;
 
+                    var fromContact = false;
+                    Message contactMessage = null;
+
                     // Обработка реквеста
                     if (mimeMessage.Headers.Contains("X-Swap-Flag"))
                     {
@@ -104,9 +108,17 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
                     {
                         seen = true;
                     }
-
+                    
                     var attachments = new List<string>();
                     
+                    // Обработка зашифрованного сообщения
+                    if (mimeMessage.Headers.Contains("X-Encrypt-Flag") || mimeMessage.Headers.Contains("X-Signed-Flag"))
+                    {
+                        fromContact = true;
+                        contactMessage = await ReadContactMessage(account, mimeMessage.ToMessage((int)summary.UniqueId.Id, folder, attachments),
+                            mimeMessage.Headers.Contains("X-Encrypt-Flag"), mimeMessage.Headers.Contains("X-Signed-Flag"));
+                    }
+
                     foreach (var attachment in mimeMessage.Attachments)
                     {
                         if (attachment is MimePart mimePart)
@@ -115,9 +127,9 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
                         }
                     }
 
-                    // Обработка есть ли зашифрованные письма
-                    
-                    var message = mimeMessage.ToMessage(summary.UniqueId.Id, folder, attachments);
+                    var message = fromContact
+                        ? mimeMessage.ToMessage((int)summary.UniqueId.Id, folder, attachments)
+                        : contactMessage;
 
                     allMessages.Add(message);
                 }
@@ -134,7 +146,7 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
             {
                 try 
                 {
-                    var messageUid = new UniqueId(email.Id);
+                    var messageUid = new UniqueId((uint)email.Id);
                     var message = await client.Inbox.GetMessageAsync(messageUid, CancellationToken.None);
                     
                     foreach (var attachment in message.Attachments)
@@ -149,6 +161,9 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
                             await mimePart.Content.DecodeToAsync(memoryStream, CancellationToken.None);
                             content = memoryStream.ToArray();
                         }
+                        
+                        // todo: is from contact save decrypted
+                        
                         if(content != null && !string.IsNullOrEmpty(fileName)) {
                             await messagesRepository.SaveAttachment(account.Id, email.Id, fileName, content);
                         }
@@ -173,7 +188,7 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
         return messages.OrderByDescending(message => message.Date).ToList();
     }
 
-    public async Task<Message?> ChangeStarred(Account account, uint messageId)
+    public async Task<Message?> ChangeStarred(Account account, int messageId)
     {
         var message = await messagesRepository.GetMessage(account.Id, messageId);
 
@@ -199,7 +214,7 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
                 await inbox.OpenAsync(FolderAccess.ReadWrite);
 
                 // Ид письма на почте
-                var messageUid = new UniqueId(messageId);
+                var messageUid = new UniqueId((uint)messageId);
 
                 var inboxMessage = await inbox.GetMessageAsync(messageUid);
 
@@ -228,7 +243,7 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
         return message;
     }
 
-    public async Task<Message?> DeleteEmail(Account account, uint messageId)
+    public async Task<Message?> DeleteEmail(Account account, int messageId)
     {
         var message = await messagesRepository.GetMessage(account.Id, messageId);
 
@@ -315,7 +330,7 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Error sending email: {ex.Message}");
+            await Console.Error.WriteLineAsync($"Error sending email: {ex.Message}");
             throw;
         }
 
@@ -344,10 +359,19 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
             await client.DisconnectAsync(true);
         }
 
-        var result = message.ToMessage(0, Folders.Sent);
-        await messagesRepository.SaveMessage(account.Id, result);
+        return message.ToMessage(await messagesRepository.GetLastSentMessageId(account.Id)-1, Folders.Sent);
+    }
+
+    public async Task<Message> SendMessageRequestToMessage(Account account, SendMessageRequest request)
+    {
+        var domain = account.Platform;
+
+        var message = new MimeMessage();
+        message.From.Add(new MailboxAddress(account.Login, account.Login.AppendDomain(domain)));
+        message.To.Add(MailboxAddress.Parse(request.To));
+        message.Subject = request.Subject;
         
-        return result;
+        return message.ToMessage(await messagesRepository.GetLastSentMessageId(account.Id)-1, Folders.Sent);
     }
 
     public async Task<SendMessageRequest> CreateContactMessage(Account account, SendMessageRequest request)
@@ -364,7 +388,7 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
             EncryptedAttachments = []
         };
 
-        var (publicRsa, publicEcp) = contactsRepository.GetPublicKeysPaths(account.Id, request.To);
+        var (publicRsa, publicEcp) = contactsRepository.GetEncryptKeysPaths(account.Id, request.To);
         var tempFolder = AppData.CreateSubFolder();
         
         if (request.IsEncrypt)
@@ -375,6 +399,9 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
 
             var tempEncryptedDsaPath = await encryptService.EncryptKey(dsaKey, tempFolder, publicRsa);
             result.EncryptedAttachments.Add(tempEncryptedDsaPath);
+
+            var tempIvPath = await encryptService.SaveIv(iv, tempFolder);
+            result.EncryptedAttachments.Add(tempIvPath);
 
             if (request.Attachments != null)
             {
@@ -394,12 +421,49 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
         return result;
     }
 
-    public Task<Message> ReadContactMessage(Account account, Message message)
+    public async Task<Message> ReadContactMessage(Account account, Message message, bool isEncrypted, bool isSigned)
     {
-        throw new NotImplementedException();
+        var resultMessage = new Message
+        {
+            Id = message.Id,
+            Subject = message.Subject,
+            From = message.From,
+            To = message.To,
+            HtmlContent = message.HtmlContent,
+        };
+        
+        var (privateRsa, publicEcp) = contactsRepository.GetDecryptKeysPaths(account.Id, message.From);
+        
+        
+        if (isEncrypted)
+        {
+            resultMessage.IsEncrypted = true;
+            
+            // todo: подставить attachments .key в DecryptKey
+            
+            resultMessage.HtmlContent = await encryptService.DecryptKey( .Message, dsaKey, iv);
+            
+            // прочитать iv из attachments
+            
+            await encryptService.DecryptMessage(request.Message, dsaKey, iv); // тело сообщения 
+            
+            if (request.Attachments != null)
+            {
+                foreach (var attachment in request.Attachments)
+                {
+                    var encryptedAttachment = await encryptService.DecryptFile(attachment, tempFolder, dsaKey, iv);
+                    // result.EncryptedAttachments.Add(encryptedAttachment); сохранить куда надо
+                }
+            }
+        }
+
+        if (isSigned)
+        {
+            resultMessage.IsSigned = true;
+        }
     }
 
-    public async Task<string> GetDecryptAttachment(Guid userId, uint messageId, string attachmentName)
+    public async Task<string> GetDecryptAttachment(Guid userId, int messageId, string attachmentName)
     {
         return await messagesRepository.GetMessageAttachmentPath(userId, messageId, attachmentName);
     }

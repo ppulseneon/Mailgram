@@ -38,7 +38,7 @@ public class AccountService(IAccountsRepository accountsRepository) : IAccountSe
     {
         return await accountsRepository.GetAccountsAsync();
     }
-
+    
     private async Task<bool> TryLogin(AccountRequest request)
     {
         try

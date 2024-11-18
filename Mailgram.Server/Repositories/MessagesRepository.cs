@@ -53,15 +53,15 @@ public class MessagesRepository: IMessagesRepository
         return messages;
     }
 
-    public async Task<Message?> GetMessage(Guid userId, uint messageId)
+    public async Task<Message?> GetMessage(Guid userId, int messageId)
     {
         var userMessagesDirectory = Path.Combine(AppData.GetAppDataDirectory(), userId.ToString(), "messages");
         var messagesFolders = Directory.GetDirectories(userMessagesDirectory);
-        var findedMessageFolder = Path.Combine(userMessagesDirectory, messageId.ToString());
+        var findMessageFolder = Path.Combine(userMessagesDirectory, messageId.ToString());
         
         foreach (var messageFolder in messagesFolders)
         {
-            if (messageFolder != findedMessageFolder) continue;
+            if (messageFolder != findMessageFolder) continue;
             
             var messageFile = Path.Combine(messageFolder, ".message");
             var message = await AppData.ReadEncryptedFile<Message>(messageFile);
@@ -71,7 +71,7 @@ public class MessagesRepository: IMessagesRepository
         return null;
     }
     
-    public async Task SaveAttachment(Guid userId, uint messageId, string filename, byte[] attachment)
+    public async Task SaveAttachment(Guid userId, int messageId, string filename, byte[] attachment)
     {
         // Получаем путь к папке пользовательских сообщений
         var userMessagesDirectory = Path.Combine(AppData.GetAppDataDirectory(), userId.ToString(), "messages");
@@ -86,7 +86,7 @@ public class MessagesRepository: IMessagesRepository
         await AppData.SaveEncryptedFile(attachment, messageFilePath);
     }
     
-    public async Task<string> GetMessageAttachmentPath(Guid userId, uint messageId, string attachmentName)
+    public async Task<string> GetMessageAttachmentPath(Guid userId, int messageId, string attachmentName)
     {
         try
         {
@@ -121,5 +121,14 @@ public class MessagesRepository: IMessagesRepository
             Console.WriteLine(ex.Message);
             return string.Empty;
         }
+    }
+
+    public async Task<int> GetLastSentMessageId(Guid id)
+    {
+        var messages = await GetMessages(id);
+        
+        var minMessageId = messages.Min(m => m.Id);
+        
+        return minMessageId >= 0 ? 0 : minMessageId;
     }
 }

@@ -5,7 +5,7 @@ namespace Mailgram.Server.Models;
 
 public class Message
 {
-    public uint Id { get; set; }
+    public int Id { get; set; }
     public bool IsEncrypted { get; set; } = false;
     public bool IsSigned { get; set; } = false;
     public bool IsEncryptedRight { get; set; } = false;
