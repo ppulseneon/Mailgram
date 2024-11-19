@@ -86,7 +86,7 @@ public class EncryptService: IEncryptService
         return resultPath;
     }
 
-    public async Task<byte[]> DecryptKey(byte[] desKey, string subTempFolderName, string privateRsaKeyPath)
+    public async Task<byte[]> DecryptKey(byte[] desKey, string privateRsaKeyPath)
     {
         using var rsa = new RSACryptoServiceProvider();
 
@@ -97,6 +97,33 @@ public class EncryptService: IEncryptService
         
         var decryptedDes = rsa.Encrypt(desKey, RSAEncryptionPadding.Pkcs1);
         return decryptedDes;
+    }
+
+    public async Task<byte[]> DecryptFile(byte[] data, byte[] desKey, byte[] iv)
+    {
+        using var des = TripleDES.Create();
+        des.Key = desKey;
+        des.IV = iv;
+
+        using var ms = new MemoryStream(data);
+        await using var cs = new CryptoStream(ms, des.CreateDecryptor(), CryptoStreamMode.Read);
+
+        using var decryptedMemoryStream = new MemoryStream();
+        await cs.CopyToAsync(decryptedMemoryStream);
+
+        return decryptedMemoryStream.ToArray();
+    }
+
+    public async Task<string> DecryptMessage(string message, byte[] desKey, byte[] iv)
+    {
+        using var des = TripleDES.Create();
+        des.Key = desKey;
+        des.IV = iv;
+
+        using var ms = new MemoryStream(Convert.FromBase64String(message));
+        await using var cs = new CryptoStream(ms, des.CreateDecryptor(), CryptoStreamMode.Read);
+        using var sr = new StreamReader(cs, Encoding.UTF8);
+        return await sr.ReadToEndAsync();
     }
 
     public async Task<string> GenerateRsa(string filepath, string privateKeyName)

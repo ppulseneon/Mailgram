@@ -13,6 +13,5 @@ public interface IEmailService
     Task<Message?> SendMessage(Account account, SendMessageRequest request, bool isSwap = false);
     Task<SendMessageRequest> CreateContactMessage(Account account, SendMessageRequest request);
     Task<Message> SendMessageRequestToMessage(Account account, SendMessageRequest request);
-    Task<Message> ReadContactMessage(Account account, Message message, bool isEncrypted, bool isSigned);
     Task<string> GetDecryptAttachment(Guid userId, int messageId, string attachmentName);
 }

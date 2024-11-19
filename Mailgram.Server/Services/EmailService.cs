@@ -11,6 +11,7 @@ using MailKit.Net.Imap;
 using MailKit.Search;
 using MimeKit;
 using Newtonsoft.Json;
+using Org.BouncyCastle.Crypto.Signers;
 using SmtpClient = MailKit.Net.Smtp.SmtpClient;
 
 namespace Mailgram.Server.Services;
@@ -22,7 +23,7 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
     {
         // Получаем все письма из базы данных
         var localSavedMessages = await messagesRepository.GetMessages(account.Id);
-
+        
         // Создаем список для хранения всех писем
         var allMessages = new List<Message>();
 
@@ -39,7 +40,7 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
 
             // Получаем папку "Входящие"
             var inbox = client.Inbox;
-
+            
             // Открываем папку "Входящие" в режиме только для чтения
             await inbox.OpenAsync(FolderAccess.ReadOnly).ConfigureAwait(false);
 
@@ -70,9 +71,6 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
 
                     var folder = Folders.Incoming;
                     var seen = false;
-
-                    var fromContact = false;
-                    Message contactMessage = null;
 
                     // Обработка реквеста
                     if (mimeMessage.Headers.Contains("X-Swap-Flag"))
@@ -111,14 +109,6 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
                     
                     var attachments = new List<string>();
                     
-                    // Обработка зашифрованного сообщения
-                    if (mimeMessage.Headers.Contains("X-Encrypt-Flag") || mimeMessage.Headers.Contains("X-Signed-Flag"))
-                    {
-                        fromContact = true;
-                        contactMessage = await ReadContactMessage(account, mimeMessage.ToMessage((int)summary.UniqueId.Id, folder, attachments),
-                            mimeMessage.Headers.Contains("X-Encrypt-Flag"), mimeMessage.Headers.Contains("X-Signed-Flag"));
-                    }
-
                     foreach (var attachment in mimeMessage.Attachments)
                     {
                         if (attachment is MimePart mimePart)
@@ -126,18 +116,28 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
                             attachments.Add(mimePart.FileName);
                         }
                     }
+                    
+                    // Обработка зашифрованного сообщения
+                    if (mimeMessage.Headers.Contains("X-Encrypt-Flag") || mimeMessage.Headers.Contains("X-Signed-Flag"))
+                    {
+                        if (allMessages.FirstOrDefault(x => x.Id == summary.UniqueId.Id) == null)
+                        {
+                            await SaveContactMessage(account, mimeMessage.ToMessage((int)summary.UniqueId.Id, folder, attachments), mimeMessage.Attachments,
+                                mimeMessage.Headers.Contains("X-Encrypt-Flag"), mimeMessage.Headers.Contains("X-Signed-Flag"));
+                            
+                            continue;
+                        }
+                    }
 
-                    var message = fromContact
-                        ? mimeMessage.ToMessage((int)summary.UniqueId.Id, folder, attachments)
-                        : contactMessage;
+                    var message = mimeMessage.ToMessage((int)summary.UniqueId.Id, folder, attachments);
 
                     allMessages.Add(message);
                 }
             }
-            
+
             // Получаем выборку незагруженных писем в хранилище
             var newEmails = allMessages.Where(m => localSavedMessages.All(ue => ue.Id != m.Id)).ToList();
-
+            
             // Сохраняем письма и файлы
             await messagesRepository.SaveMessages(account.Id, newEmails);
             
@@ -162,8 +162,6 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
                             content = memoryStream.ToArray();
                         }
                         
-                        // todo: is from contact save decrypted
-                        
                         if(content != null && !string.IsNullOrEmpty(fileName)) {
                             await messagesRepository.SaveAttachment(account.Id, email.Id, fileName, content);
                         }
@@ -181,7 +179,7 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
             Console.WriteLine("LoadEmails catch exception: " + ex.Message);
         }
     }
-
+    
     public async Task<List<Message>> GetAll(Guid userId)
     {
         var messages = await messagesRepository.GetMessages(userId);
@@ -421,7 +419,7 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
         return result;
     }
 
-    public async Task<Message> ReadContactMessage(Account account, Message message, bool isEncrypted, bool isSigned)
+    private async Task SaveContactMessage(Account account, Message message, IEnumerable<MimeEntity> attachmentsEntity, bool isEncrypted, bool isSigned)
     {
         var resultMessage = new Message
         {
@@ -430,29 +428,71 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
             From = message.From,
             To = message.To,
             HtmlContent = message.HtmlContent,
+            AttachmentFiles = message.AttachmentFiles,
         };
         
         var (privateRsa, publicEcp) = contactsRepository.GetDecryptKeysPaths(account.Id, message.From);
-        
         
         if (isEncrypted)
         {
             resultMessage.IsEncrypted = true;
             
-            // todo: подставить attachments .key в DecryptKey
-            
-            resultMessage.HtmlContent = await encryptService.DecryptKey( .Message, dsaKey, iv);
-            
-            // прочитать iv из attachments
-            
-            await encryptService.DecryptMessage(request.Message, dsaKey, iv); // тело сообщения 
-            
-            if (request.Attachments != null)
+            byte[] key = null;
+            byte[] iv = null;
+
+            foreach (var attachment in attachmentsEntity)
             {
-                foreach (var attachment in request.Attachments)
+                if (attachment is not MimePart part) continue;
+                
+                var fileName = part.FileName ?? part.ContentDisposition?.FileName;
+
+                if (fileName == null) continue;
+                using var stream = new MemoryStream();
+                await part.Content.DecodeToAsync(stream);
+                var data = stream.ToArray();
+
+                if (fileName.EndsWith(".key", StringComparison.OrdinalIgnoreCase))
                 {
-                    var encryptedAttachment = await encryptService.DecryptFile(attachment, tempFolder, dsaKey, iv);
-                    // result.EncryptedAttachments.Add(encryptedAttachment); сохранить куда надо
+                    key = data;
+                }
+                else if (fileName.EndsWith(".iv", StringComparison.OrdinalIgnoreCase))
+                {
+                    iv = data;
+                }
+            }
+            
+            var decryptedKey = await encryptService.DecryptKey(key!, privateRsa);
+            
+            resultMessage.HtmlContent = await encryptService.DecryptMessage(message.HtmlContent, decryptedKey, iv!);
+            
+            // Обрабатываем все прикрепленные файлы
+            var newAttachments = (from attachment in resultMessage.AttachmentFiles where attachment != ".key" && attachment != ".iv" select attachment[..^4]).ToList();
+            resultMessage.AttachmentFiles = newAttachments;
+
+            await messagesRepository.SaveMessage(account.Id, resultMessage);
+            
+            if (message.AttachmentFiles != null)
+            {
+                foreach (var attachment in attachmentsEntity)
+                {
+                    if (attachment is not MimePart part) continue;
+                    
+                    var fileName = part.FileName ?? part.ContentDisposition?.FileName;
+                    
+                    if (!fileName.EndsWith(".enc", StringComparison.OrdinalIgnoreCase))
+                    {
+                        Console.WriteLine("The file is not encrypted (.enc).");
+                        return;
+                    }
+                    
+                    using var stream = new MemoryStream();
+                    await part.Content.DecodeToAsync(stream);
+                    var data = stream.ToArray();
+                    
+                    var encryptedAttachment = await encryptService.DecryptFile(data, decryptedKey, iv!);
+                    
+                    var decryptedFilePath = fileName[..^4]; 
+                    await messagesRepository.SaveAttachment(account.Id, message.Id, decryptedFilePath, encryptedAttachment);
                 }
             }
         }
