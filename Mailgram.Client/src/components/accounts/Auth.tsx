@@ -6,6 +6,8 @@ import AccountsService from "../../services/AccountsService.tsx";
 import AccountRequest from "../../models/Request/AccountRequest.tsx";
 import {PagesList} from "../../enums/PagesList.tsx";
 import {PageContext} from "../../hooks/PageContext.tsx";
+import MessagesService from "../../services/MessagesService.tsx";
+import {ChatContext} from "../../hooks/ChatProvider.tsx";
 
 function Auth(): ReactElement {
     const {setPage} = useContext(PageContext);
@@ -16,7 +18,8 @@ function Auth(): ReactElement {
     const [selectedEmailSmtp, setSelectedEmailSmtp] = useState<ConnectCredentials| null>(null);
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false); // Добавлено состояние загрузки
-
+    const {setChats} = useContext(ChatContext)
+    
     const handleEmailChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const selectedName = event.target.value;
         const selectedOption = emailOptions.find((option) => option.name === selectedName);
@@ -58,6 +61,23 @@ function Auth(): ReactElement {
             }
 
             localStorage.setItem('accountId', accountResponse!.id!);
+            localStorage.setItem('email', selectedEmailName);
+
+            const syncMail = async () => {
+                const messagesService = new MessagesService();
+
+                console.log("Синхронизируем почту");
+                await messagesService.syncMessages(accountResponse!.id!);
+
+                console.log("Обновляем сообщения");
+                const messages = await messagesService.getMessages(accountResponse!.id!);
+
+                if (messages != undefined){
+                    setChats(messages);
+                }
+            };
+            
+            await syncMail()
             
             setPage(PagesList.Main);
         } finally { 

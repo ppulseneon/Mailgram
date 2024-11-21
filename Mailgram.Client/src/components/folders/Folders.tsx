@@ -79,7 +79,7 @@ function Folders(): JSX.Element {
 
             <FolderButton icon={<RiContactsBook2Fill
                 className={folder === FoldersList.Contacts ? "folder-icon-active" : "folder-icon"}/>}
-                          text="Черновики" onClick={handleContactsFolderClick}
+                          text="Контакты" onClick={handleContactsFolderClick}
                           isActive={folder === FoldersList.Contacts} />
         </div>
     </div>

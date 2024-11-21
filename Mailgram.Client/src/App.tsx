@@ -3,14 +3,16 @@ import {PageContext} from "./hooks/PageContext.tsx";
 import {PagesList} from "./enums/PagesList.tsx";
 import MainPage from "./pages/Main.tsx";
 import AccountsPage from "./pages/Accounts.tsx";
-
-// import AccountResponse from "./models/Response/AccountResponse";
+import MessagesService from "./services/MessagesService.tsx";
+import {ChatContext} from "./hooks/ChatProvider.tsx";
 
 function App() {
-    // const [setAccounts] = useState<AccountResponse[]>([]);
     const {page} = useContext(PageContext);
     const [pageElement, setPageElement] = useState<ReactElement | null>(null);
-
+    const {setChats} = useContext(ChatContext);
+    
+    let intervalId: string | number | NodeJS.Timeout | null | undefined;
+    
     // Обработка загрузки приложения
     useEffect(() => {
         
@@ -45,16 +47,38 @@ function App() {
         setPageElement(element);
     }, [page]);
 
-    // useEffect(() => {
-    //     const fetchAccounts = async () => {
-    //         const accountsService = new AccountsService();
-    //         const accounts = await accountsService.getAccounts();
-    //         // setAccounts(accounts);
-    //         console.log(accounts);
-    //     };
-    //
-    //     fetchAccounts();
-    // }, []);
+    // Обновления чатов
+    useEffect(() => {
+        const accountId = localStorage.getItem('accountId');
+
+        if (accountId && (page === PagesList.Main || page === PagesList.Initial)) {
+            intervalId = setInterval(() => {
+                const syncMail = async () => {
+                    const messagesService = new MessagesService();
+
+                    console.log("Синхронизируем почту");
+                    await messagesService.syncMessages(accountId);
+                    
+                    console.log("Обновляем сообщения");
+                    const messages = await messagesService.getMessages(accountId);
+                    
+                    if (messages != undefined){
+                        setChats(messages);
+                    }
+                };
+
+                syncMail().then();
+            }, 1500);
+        }
+
+        return () => { // Cleanup
+            if (intervalId) {
+                clearInterval(intervalId);
+                intervalId = null;
+            }
+        };
+    }, [page, localStorage.getItem('accountId')]);
+    
 
     return pageElement;
 }

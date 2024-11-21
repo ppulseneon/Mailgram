@@ -1,12 +1,12 @@
 import '../../assets/css/chats/ChatContent.css';
 
-function ChatContent() {
+function ChatContent({chatname, chatcontent}: {chatname: string; chatcontent: string}) {
     return <div className="chat-content">
         <h1 className="chat-content-name" >
-            Milana Yablonko
+            {chatname}
         </h1>
         <p className="chat-content-topic">
-            Meow meow meow meow meow meow meow meow meow meow
+            {chatcontent}
         </p>
     </div>    
 }

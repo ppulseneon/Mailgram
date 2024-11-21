@@ -27,10 +27,17 @@ function getFirstLettersOrChars(inputString: string): string {
     }
 }
 
-function ChatImage({ chatName }: ChatImageProps) {
+function ChatImage({ chatName, email }: {chatName: string, email: string}) {
+    let firstLetter = email!.charAt(0)
+    let displayName = "";
     
-    // Получаем первый символ названия чата
-    const firstLetter = chatName.charAt(0);
+    try {
+        // Получаем первый символ названия чата
+        firstLetter = chatName!.charAt(0);
+    }
+    catch (error) {
+        
+    }
 
     // Считаем номер цвета
     const index = firstLetter.charCodeAt(0) % gradients.length;
@@ -38,7 +45,12 @@ function ChatImage({ chatName }: ChatImageProps) {
     // Получаем цвет из коллекции
     const gradient = gradients[index];
     
-    const displayName = getFirstLettersOrChars(chatName);
+    try {
+        displayName = getFirstLettersOrChars(chatName!);
+    }
+    catch (error) {
+        displayName = getFirstLettersOrChars(email!);
+    }
     
     return <div className="chat-image" style={{
             background: `linear-gradient(180deg, ${gradient.start} 0%, ${gradient.end} 100%)`,

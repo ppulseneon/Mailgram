@@ -9,7 +9,7 @@
 }
 
 .accounts-container::-webkit-scrollbar {
-    display: none;  /* Safari and Chrome */
+    display: none;
 }
 
 .accounts-list {

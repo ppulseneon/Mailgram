@@ -1,0 +1,92 @@
+﻿
+.workspace-chat-container{
+    background-color: #182533;
+    padding: 8px;
+    border-radius: 16px;
+}
+
+.subject-container {
+    padding: 16px 8px 16px 8px;
+}
+
+.subject-container h1{
+    font-size: 26px;
+    text-align: left;
+    color: white;
+    font-weight: 500;
+}
+
+.address-container {
+    text-align: left;
+    padding: 0 8px 0 8px;
+}
+
+.address-container p{
+    font-size: 16px;
+    text-align: left;
+}
+
+.control-container{
+    display: flex;
+    text-align: left;
+    flex-direction: row;
+    padding: 8px 8px 0 8px;
+    align-items: center;
+}
+
+.control-element {
+    margin-right: 8px;
+}
+
+.html-content{
+    padding: 0 8px 0 8px;
+    margin-top: 16px;
+}
+
+.notFavourite {
+    padding-top: 4px;
+    color: #768c9e;
+}
+
+.isFavourite {
+    padding-top: 4px;
+    color: #5298cf;
+}
+
+.trash-bukkit {
+    padding-top: 4px;
+    color: #768c9e;
+}
+
+.attachments{
+    padding: 0 8px 0 8px;
+    display: flex;
+    flex-direction: row;
+}
+
+.attachment-name{
+    margin-top: 16px;
+    font-size: 16px;
+    text-align: left;
+    color: white;
+    font-weight: 500;
+    padding: 0 8px 0 8px;
+}
+
+.attachment{
+    border-radius: 8px;
+    background-color: #2b5278;
+    padding: 2px 8px 2px 8px;
+}
+
+.encrypt{
+    border-radius: 8px;
+    background-color: #4e8bcf;
+    padding: 0 4px 0 4px;
+}
+
+.ecp{
+    border-radius: 8px;
+    background-color: #cf4eb1;
+    padding: 0 4px 0 4px;
+}

@@ -6,15 +6,16 @@ import App from './App'
 import {PageProvider} from './hooks/PageContext'
 import {FolderProvider} from './hooks/FolderContext'
 import {MenuProvider} from "./hooks/MenuProvider.tsx";
+import {ChatProvider} from "./hooks/ChatProvider.tsx";
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
         <PageProvider>
             <MenuProvider>
                 <FolderProvider>
-                    {/*<ChatProvider>*/}
+                    <ChatProvider>
                         <App/>
-                    {/*</ChatProvider>*/}
+                    </ChatProvider>
                 </FolderProvider>
             </MenuProvider>
         </PageProvider>

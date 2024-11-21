@@ -14,7 +14,7 @@ function Accounts(): ReactElement {
             setAccounts(accounts!);
         };
 
-        fetchAccounts();
+        fetchAccounts().then();
     }, []);
     
     return (

@@ -34,9 +34,9 @@
 }
 
 .chat-info-button:hover {
-    opacity: 1;
+    /*opacity: 1;*/
 }
 
 .chat:hover .chat-info-button {
-    opacity: 1;
+    /*opacity: 1;*/
 }

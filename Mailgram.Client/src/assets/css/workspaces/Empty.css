@@ -1,12 +1,34 @@
 .workspace-container {
     width: calc(100vw - 22vw - 82px);
-    height: 100%;
+    height: 100dvh;
+    background-color: #0e1621;
+    padding: 8px;
+    display: flex;
+    justify-content: start;
+    flex-direction: column;
+    overflow-y: scroll;
+    box-sizing: border-box;
+}
+
+.workspace-container::-webkit-scrollbar {
+    display: none;
+}
+
+.html-content {
+    
+}
+
+.empty-message-container {
+    width: calc(100vw - 22vw - 82px);
+    height: 100dvh;
     background-color: #0e1621;
     padding: 20px;
     display: flex;
     justify-content: center;
     align-items: center;
     flex-direction: column;
+    overflow-y: hidden;
+    box-sizing: border-box;
 }
 
 .empty-message {
