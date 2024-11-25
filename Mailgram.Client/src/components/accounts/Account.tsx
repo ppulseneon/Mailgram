@@ -10,10 +10,13 @@ import {ChatContext} from "../../hooks/ChatProvider.tsx";
 function AccountElement(account: Account): ReactElement {
     const {setPage} = useContext(PageContext);
     const {setChats} = useContext(ChatContext);
-    const handleAccountClick = (accountId: UUID) => {
+    const handleAccountClick = (accountId: UUID, accountName: string) => {
         
         // Помечаем активный аккаунт
         localStorage.setItem('accountId', accountId);
+        
+        // Помечаем активный аккаунт
+        localStorage.setItem('accountName', accountName);
 
         const syncMail = async () => {
             const messagesService = new MessagesService();
@@ -34,7 +37,7 @@ function AccountElement(account: Account): ReactElement {
     
     return (
         <div className="account-container"
-             onClick={() => handleAccountClick(account.id)}>
+             onClick={() => handleAccountClick(account.id, account.login)}>
             <div className="account-info" style={{ display: 'flex', alignItems: 'center' }}>
                 <h1>Войти как <b style={{fontWeight: "bold"}}>{account.login}</b></h1>
                 <p className="platform-pill">{account.platform}</p>

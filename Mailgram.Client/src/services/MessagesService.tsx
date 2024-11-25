@@ -50,6 +50,20 @@ class MessagesService {
 
         await fetch(url, options);
     }
+    
+    public async getAttachment(userId: string, messageId: number, attachment: string): Promise<string>{
+        const url = `${this.baseUrl}/attachment?userId=${userId}&messageId=${messageId}&attachmentName=${attachment}`;
+
+        const options = {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        };
+
+        const response = await fetch(url, options);
+        return response.text();
+    }
 }
 
 export default MessagesService

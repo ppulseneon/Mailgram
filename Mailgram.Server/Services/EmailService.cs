@@ -1,3 +1,4 @@
+using System.Text;
 using Mailgram.Server.Enums;
 using Mailgram.Server.Extensions.Mappers;
 using Mailgram.Server.Models;
@@ -75,25 +76,31 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
                     // Обработка реквеста
                     if (mimeMessage.Headers.Contains("X-Swap-Flag"))
                     {
-                        var contact = JsonConvert.DeserializeObject<ContactSwap>(mimeMessage.HtmlBody);
-        
-                        var importedContact = new Contact
+                        if (localSavedMessages.FirstOrDefault(x => x.Id == summary.UniqueId.Id) == null)
                         {
-                            Email = contact!.From,
-                            Status = ExchangeStatus.Received
-                        };
+                            var contact = JsonConvert.DeserializeObject<ContactSwap>(mimeMessage.HtmlBody);
 
-                        if (contact.SwapStatus == SwapStatus.Request)
-                        {
-                            await contactsRepository.SaveContact(account.Id, importedContact);
+                            var importedContact = new Contact
+                            {
+                                Email = contact!.From,
+                                Status = ExchangeStatus.Received
+                            };
+
+                            if (contact.SwapStatus == SwapStatus.Request)
+                            {
+                                await contactsRepository.SaveContact(account.Id, importedContact);
+                            }
+
+                            if (contact.SwapStatus == SwapStatus.Response)
+                            {
+                                importedContact.Status = ExchangeStatus.Accept;
+                                await contactsRepository.SaveContact(account.Id, importedContact);
+                            }
+
+                            await contactsRepository.ImportContactKeys(account.Id, contact.From, contact.PublicRsa,
+                                contact.PublicEcp);
                         }
-                        
-                        if (contact.SwapStatus == SwapStatus.Response)
-                        {
-                            await contactsRepository.SaveContact(account.Id, importedContact);
-                        }
-        
-                        await contactsRepository.ImportContactKeys(account.Id, contact.From, contact.PublicRsa, contact.PublicEcp);
+
                         continue;
                     }
                     
@@ -120,13 +127,12 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
                     // Обработка зашифрованного сообщения
                     if (mimeMessage.Headers.Contains("X-Encrypt-Flag") || mimeMessage.Headers.Contains("X-Signed-Flag"))
                     {
-                        if (allMessages.FirstOrDefault(x => x.Id == summary.UniqueId.Id) == null)
+                        if (localSavedMessages.FirstOrDefault(x => x.Id == summary.UniqueId.Id) == null)
                         {
                             await SaveContactMessage(account, mimeMessage.ToMessage((int)summary.UniqueId.Id, folder, attachments), mimeMessage.Attachments,
                                 mimeMessage.Headers.Contains("X-Encrypt-Flag"), mimeMessage.Headers.Contains("X-Signed-Flag"));
-                            
-                            continue;
                         }
+                        continue;
                     }
 
                     var message = mimeMessage.ToMessage((int)summary.UniqueId.Id, folder, attachments);
@@ -368,6 +374,14 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
         message.From.Add(new MailboxAddress(account.Login, account.Login.AppendDomain(domain)));
         message.To.Add(MailboxAddress.Parse(request.To));
         message.Subject = request.Subject;
+        message.Date = DateTime.Now;
+        
+        var bodyBuilder = new BodyBuilder
+        {
+            HtmlBody = request.Message
+        };
+        
+        message.Body = bodyBuilder.ToMessageBody();
         
         return message.ToMessage(await messagesRepository.GetLastSentMessageId(account.Id)-1, Folders.Sent);
     }
@@ -379,14 +393,14 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
             UserId = request.UserId,
             Subject = request.Subject,
             To = request.To,
-            Message = string.Empty,
+            Message = request.Message,
             IsEncrypt = request.IsEncrypt,
             IsSign = request.IsSign,
             Attachments = [],
             EncryptedAttachments = []
         };
 
-        var (publicRsa, publicEcp) = contactsRepository.GetEncryptKeysPaths(account.Id, request.To);
+        var (publicRsa, privateEcp) = contactsRepository.GetEncryptKeysPaths(account.Id, request.To);
         var tempFolder = AppData.CreateSubFolder();
         
         if (request.IsEncrypt)
@@ -413,7 +427,11 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
 
         if (request.IsSign)
         {
-            
+            var hash = encryptService.ComputeSHA256Hash(request.Message);
+            var preparedHashHex = Convert.ToHexString(hash).ToLower();
+            var signature = await encryptService.CreateMessageSign(preparedHashHex, privateEcp); 
+            var tempSign = await encryptService.SaveSign(signature, tempFolder);
+            result.EncryptedAttachments.Add(tempSign);
         }
         
         return result;
@@ -428,7 +446,14 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
             From = message.From,
             To = message.To,
             HtmlContent = message.HtmlContent,
+            Folder = Folders.Incoming,
             AttachmentFiles = message.AttachmentFiles,
+            Date = message.Date,
+            IsEncrypted = message.IsEncrypted,
+            IsSigned = message.IsSigned,
+            IsSeen = message.IsSeen,
+            IsEncryptedRight = message.IsEncryptedRight,
+            IsSignedRight = message.IsSignedRight,
         };
         
         var (privateRsa, publicEcp) = contactsRepository.GetDecryptKeysPaths(account.Id, message.From);
@@ -436,6 +461,7 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
         if (isEncrypted)
         {
             resultMessage.IsEncrypted = true;
+            resultMessage.IsEncryptedRight = true;
             
             byte[] key = null;
             byte[] iv = null;
@@ -482,7 +508,7 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
                     if (!fileName.EndsWith(".enc", StringComparison.OrdinalIgnoreCase))
                     {
                         Console.WriteLine("The file is not encrypted (.enc).");
-                        return;
+                        continue;
                     }
                     
                     using var stream = new MemoryStream();
@@ -500,6 +526,38 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
         if (isSigned)
         {
             resultMessage.IsSigned = true;
+            byte[] sign = null;
+            
+            if (message.AttachmentFiles != null)
+            {
+                foreach (var attachment in attachmentsEntity)
+                {
+                    if (attachment is not MimePart part) continue;
+
+                    var fileName = part.FileName ?? part.ContentDisposition?.FileName;
+
+                    if (fileName.EndsWith(".sign", StringComparison.OrdinalIgnoreCase))
+                    {
+                        using var stream = new MemoryStream();
+                        await part.Content.DecodeToAsync(stream);
+                        sign = stream.ToArray();
+                    }
+                }
+            }
+
+            if (sign == null)
+            {
+                resultMessage.IsSignedRight = false;
+                await messagesRepository.SaveMessage(account.Id, resultMessage);
+                return;
+            }
+
+            var hash = encryptService.ComputeSHA256Hash(resultMessage.HtmlContent);
+            var preparedHashHex = Convert.ToHexString(hash).ToLower(); 
+            var preparedHashBytes = Encoding.UTF8.GetBytes(preparedHashHex); 
+            var signedResult = await encryptService.VerifySign(preparedHashBytes, sign, publicEcp); 
+            resultMessage.IsEncryptedRight = signedResult;
+            await messagesRepository.SaveMessage(account.Id, resultMessage);
         }
     }
 

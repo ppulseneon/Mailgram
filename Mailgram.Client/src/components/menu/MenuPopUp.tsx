@@ -12,6 +12,7 @@ function MenuPopUp(): ReactElement {
 
     const handleSwitchAccountClick = () => {
         localStorage.removeItem('accountId');
+        localStorage.removeItem('accountName');
         setPage(PagesList.Accounts);
         setVisibility();
     };
@@ -28,7 +29,7 @@ function MenuPopUp(): ReactElement {
                 <h1>Настройки</h1>
 
                 <h2>Текущая почта: </h2>
-                <p>thebooom@yandex.ru</p>
+                <p>{localStorage.getItem('accountName')}</p>
             </div>
 
             <hr/>

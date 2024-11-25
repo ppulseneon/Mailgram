@@ -52,23 +52,29 @@ function App() {
         const accountId = localStorage.getItem('accountId');
 
         if (accountId && (page === PagesList.Main || page === PagesList.Initial)) {
+            const messagesService = new MessagesService();
+            
             intervalId = setInterval(() => {
                 const syncMail = async () => {
-                    const messagesService = new MessagesService();
-
                     console.log("Синхронизируем почту");
                     await messagesService.syncMessages(accountId);
-                    
+                };
+
+                syncMail().then();
+            }, 10000);
+
+            intervalId = setInterval(() => {
+                const syncMail = async () => {
                     console.log("Обновляем сообщения");
                     const messages = await messagesService.getMessages(accountId);
-                    
+
                     if (messages != undefined){
                         setChats(messages);
                     }
                 };
 
                 syncMail().then();
-            }, 1500);
+            }, 100);
         }
 
         return () => { // Cleanup

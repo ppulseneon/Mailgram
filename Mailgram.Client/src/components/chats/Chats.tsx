@@ -2,7 +2,6 @@ import Chat from './Chat';
 import '../../assets/css/chats/Chats.css';
 import {useContext, useEffect, useState} from "react";
 import {ChatContext} from "../../hooks/ChatProvider.tsx";
-import MessageResponse from "../../models/Response/MessageResponse.tsx";
 import {FolderContext} from "../../hooks/FolderContext.tsx";
 import {FoldersList} from "../../enums/FoldersList.tsx";
 import {Folders} from "../../models/Enums/Folders.tsx";
@@ -13,84 +12,56 @@ function Chats(): JSX.Element {
     const {folder} = useContext(FolderContext);
     
     useEffect(() => {
-        if (folder != FoldersList.SendButton){
+        if (folder != FoldersList.SendButton && folder != FoldersList.Contacts){
             setLastFolder(folder);   
         }
     }, [folder]);
     
     return <div className="chats-container">
-        {
-            chats.map((chat: MessageResponse, index) => {
-                if (folder != FoldersList.SendButton) {
-                    if (folder == FoldersList.Received) {
-                        if (chat.folder == Folders.Incoming || chat.folder == Folders.Favorites) {
-                            return <Chat key={index} id={chat.id!}/>
-                        }
-                    }
-
-                    if (folder == FoldersList.Sent) {
-                        if (chat.folder == Folders.Sent) {
-                            return <Chat key={index} id={chat.id!}/>
-                        }
-                    }
-
-                    if (folder == FoldersList.Sent) {
-                        if (chat.folder == Folders.Sent) {
-                            return <Chat key={index} id={chat.id!}/>
-                        }
-                    }
-
-                    if (folder == FoldersList.Favorite) {
-                        if (chat.folder == Folders.Favorites) {
-                            return <Chat key={index} id={chat.id!}/>
-                        }
-                    }
-
-                    if (folder == FoldersList.Deleted) {
-                        if (chat.folder == Folders.Deleted) {
-                            return <Chat key={index} id={chat.id!}/>
-                        }
-                    }
-
-                    if (folder == FoldersList.Drafted) {
-                        if (chat.folder == Folders.Drafts) {
-                            return <Chat key={index} id={chat.id!}/>
-                        }
-                    }
+        {chats.length > 0 && chats.map((chat, index) => {
+            if (folder !== FoldersList.SendButton && folder !== FoldersList.Contacts) {
+                if (folder === FoldersList.Received && (chat.folder === Folders.Incoming || chat.folder === Folders.Favorites)) {
+                    return <Chat key={index} id={chat.id!} />;
                 }
-                else{
-                    if (lastFolder == FoldersList.Received) {
-                        if (chat.folder == Folders.Incoming || chat.folder == Folders.Favorites) {
-                            return <Chat key={index} id={chat.id!}/>
-                        }
-                    }
 
-                    if (lastFolder == FoldersList.Sent) {
-                        if (chat.folder == Folders.Sent) {
-                            return <Chat key={index} id={chat.id!}/>
-                        }
-                    }
-
-                    if (lastFolder == FoldersList.Favorite) {
-                        if (chat.folder == Folders.Favorites) {
-                            return <Chat key={index} id={chat.id!}/>
-                        }
-                    }
-
-                    if (lastFolder == FoldersList.Deleted) {
-                        if (chat.folder == Folders.Deleted) {
-                            return <Chat key={index} id={chat.id!}/>
-                        }
-                    }
-
-                    if (lastFolder == FoldersList.Drafted) {
-                        if (chat.folder == Folders.Drafts) {
-                            return <Chat key={index} id={chat.id!}/>
-                        }
-                    }
+                if (folder === FoldersList.Sent && chat.folder === Folders.Sent) {
+                    return <Chat key={index} id={chat.id!} />;
                 }
-            })
-        }
+
+                if (folder === FoldersList.Favorite && chat.folder === Folders.Favorites) {
+                    return <Chat key={index} id={chat.id!} />;
+                }
+
+                if (folder === FoldersList.Deleted && chat.folder === Folders.Deleted) {
+                    return <Chat key={index} id={chat.id!} />;
+                }
+
+                if (folder === FoldersList.Drafted && chat.folder === Folders.Drafts) {
+                    return <Chat key={index} id={chat.id!} />;
+                }
+            } else {
+                if (lastFolder === FoldersList.Received && (chat.folder === Folders.Incoming || chat.folder === Folders.Favorites)) {
+                    return <Chat key={index} id={chat.id!} />;
+                }
+
+                if (lastFolder === FoldersList.Sent && chat.folder === Folders.Sent) {
+                    return <Chat key={index} id={chat.id!} />;
+                }
+
+                if (lastFolder === FoldersList.Favorite && chat.folder === Folders.Favorites) {
+                    return <Chat key={index} id={chat.id!} />;
+                }
+
+                if (lastFolder === FoldersList.Deleted && chat.folder === Folders.Deleted) {
+                    return <Chat key={index} id={chat.id!} />;
+                }
+
+                if (lastFolder === FoldersList.Drafted && chat.folder === Folders.Drafts) {
+                    return <Chat key={index} id={chat.id!} />;
+                }
+            }
+            return null;
+        })}
     </div>
 }
 

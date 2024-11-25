@@ -2,7 +2,7 @@ namespace Mailgram.Server.Enums;
 
 public enum ExchangeStatus
 {
-    Sent,
-    Received,
-    Accept
+    Sent = 0,
+    Received = 1,
+    Accept = 2 
 }

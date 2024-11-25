@@ -86,16 +86,27 @@ public class EncryptService: IEncryptService
         return resultPath;
     }
 
+    public async Task<string> SaveSign(string data, string subTempFolderName)
+    {
+        var resultPath = Path.Combine(subTempFolderName, ".sign");
+        await File.WriteAllTextAsync(resultPath, data);
+        
+        return resultPath;
+    }
+
     public async Task<byte[]> DecryptKey(byte[] desKey, string privateRsaKeyPath)
     {
         using var rsa = new RSACryptoServiceProvider();
 
-        var publicRsa = await File.ReadAllTextAsync(privateRsaKeyPath);
+        var unformattedEmail = privateRsaKeyPath.Split("\\")[^2];;
+        var formattedEmail = unformattedEmail.Substring(unformattedEmail.IndexOf('<') + 1, unformattedEmail.IndexOf('>') - unformattedEmail.IndexOf('<') - 1);
+        
+        var publicRsa = await File.ReadAllTextAsync(privateRsaKeyPath.Replace(unformattedEmail, formattedEmail));
         
         // Экспортируем приватный ключ
         rsa.FromXmlString(publicRsa);
         
-        var decryptedDes = rsa.Encrypt(desKey, RSAEncryptionPadding.Pkcs1);
+        var decryptedDes = rsa.Decrypt(desKey, RSAEncryptionPadding.Pkcs1);
         return decryptedDes;
     }
 
@@ -112,6 +123,13 @@ public class EncryptService: IEncryptService
         await cs.CopyToAsync(decryptedMemoryStream);
 
         return decryptedMemoryStream.ToArray();
+    }
+
+    public byte[] ComputeSHA256Hash(string data)
+    {
+        using var sha256 = SHA256.Create();
+        var bytes = Encoding.UTF8.GetBytes(data);
+        return sha256.ComputeHash(bytes);
     }
 
     public async Task<string> DecryptMessage(string message, byte[] desKey, byte[] iv)
@@ -185,13 +203,27 @@ public class EncryptService: IEncryptService
         throw new NotImplementedException();
     }
 
-    public string CreateMessageSign()
+    public async Task<string> CreateMessageSign(string hash, string privateEcpKeyPath)
     {
-        throw new NotImplementedException();
+        using var rsa = RSA.Create();
+        var privateRsaEcp = await File.ReadAllTextAsync(privateEcpKeyPath);
+        rsa.FromXmlString(privateRsaEcp);
+        
+        var hashBytes = Convert.FromHexString(hash);
+        var signatureBytes = rsa.SignHash(hashBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        
+        return Convert.ToBase64String(signatureBytes);
     }
 
-    public bool VerifySign()
+    public async Task<bool> VerifySign(byte[] hash, byte[] signature, string publicKeyXml)
     {
-        throw new NotImplementedException();
+        using var rsa = RSA.Create();
+        
+        var unformattedEmail = publicKeyXml.Split("\\")[^2];
+        var formattedEmail = unformattedEmail.Substring(unformattedEmail.IndexOf('<') + 1, unformattedEmail.IndexOf('>') - unformattedEmail.IndexOf('<') - 1);
+        var publicRsaEcp = await File.ReadAllTextAsync(publicKeyXml.Replace(unformattedEmail, formattedEmail));
+        
+        rsa.FromXmlString(publicRsaEcp);
+        return rsa.VerifyHash(hash, signature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
     }
 }

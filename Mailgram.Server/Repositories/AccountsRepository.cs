@@ -100,7 +100,7 @@ public class AccountsRepository: IAccountsRepository
         Directory.CreateDirectory(messagesFolder);
         
         // Получаем путь к папке контактов пользователя
-        var contactsFolder = Path.Combine(accountDirectoryPath, SystemFoldersNames.Contacts);
+        var contactsFolder = Path.Combine(accountDirectoryPath, SystemFoldersNames.ContactsWorkspace);
         
         // Создаем папку контактов пользователя
         Directory.CreateDirectory(contactsFolder);

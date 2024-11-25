@@ -61,7 +61,7 @@ function Auth(): ReactElement {
             }
 
             localStorage.setItem('accountId', accountResponse!.id!);
-            localStorage.setItem('email', selectedEmailName);
+            localStorage.setItem('accountName', selectedEmailName);
 
             const syncMail = async () => {
                 const messagesService = new MessagesService();

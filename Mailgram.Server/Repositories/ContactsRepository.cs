@@ -73,8 +73,6 @@ public class ContactsRepository(IEncryptService encryptService): IContactsReposi
         var contactFilePath = Path.Combine(contactDirectory, ".contact");
         
         var contactFile = await AppData.ReadEncryptedFile<Contact>(contactFilePath);
-
-        contactFile!.Status = ExchangeStatus.Accept;
         
         // Сериализируем сообщение
         var jsonMessage = JsonConvert.SerializeObject(contactFile);

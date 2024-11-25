@@ -3,26 +3,26 @@ import {ChatContext} from "../../hooks/ChatProvider.tsx";
 import '../../assets/css/workspaces/Chat.css'
 import {FaStar, FaTrash} from "react-icons/fa";
 import {Folders} from "../../models/Enums/Folders.tsx";
-import AccountsService from "../../services/AccountsService.tsx";
 import MessagesService from "../../services/MessagesService.tsx";
 
 function ChatWorkspace(): JSX.Element {
     const {chats, openChat} = useContext(ChatContext);
 
     const openChatObject = chats.find(x => x.id === openChat)!;
-
+    const messages = new MessagesService();
+    const accountId = localStorage.getItem('accountId')!;
+    
     const deleteMessage = async () => {
-        const messages = new MessagesService();
-        const accountId = localStorage.getItem('accountId');
         await messages.deleteMessage(accountId!, openChatObject!.id!);
     };
 
     const changeStar = async () => {
-        const messages = new MessagesService();
-        const accountId = localStorage.getItem('accountId');
-        await messages.changeStar(accountId!, openChatObject!.id!);
+        await messages.changeStar(accountId, openChatObject!.id!);
     };
     
+    const handleOpenFile = async (attachment: string) => {
+        await messages.getAttachment(accountId, openChatObject.id!, attachment);
+    };
     
     function formatDate(date: Date): string {
         if (!(date instanceof Date)) {
@@ -58,16 +58,23 @@ function ChatWorkspace(): JSX.Element {
                     <p>{formatDate(new Date(openChatObject.date!))}</p>
                 </div>
 
-                <div className="control-element" onClick={changeStar}>
-                    <div className={openChatObject.folder == Folders.Favorites ? "isFavourite" : "notFavourite"}>
-                        <FaStar/></div>
-                </div>
 
-                <div className="control-element">
-                    <div className="trash-bukkit" onClick={deleteMessage}>
-                        <FaTrash/></div>
-                </div>
+                {
+                    openChatObject.folder != Folders.Deleted ? (<div className="control-element" onClick={changeStar}>
+                            <div
+                                className={openChatObject.folder == Folders.Favorites ? "isFavourite" : "notFavourite"}>
+                                <FaStar/></div>
+                        </div>
+                    ) : null
+                }
 
+                {
+                    openChatObject.folder != Folders.Deleted ? (<div className="control-element">
+                            <div className="trash-bukkit" onClick={deleteMessage}>
+                                <FaTrash/></div>
+                        </div>
+                    ) : null
+                }
 
                 {
                     openChatObject.isEncryptedRight ? (
@@ -80,7 +87,7 @@ function ChatWorkspace(): JSX.Element {
                 }
 
                 {
-                    openChatObject.isSignedRight ? (
+                    openChatObject.isSigned ? (
                         <div className="control-element">
                             <div className="ecp">
                                 Подписано
@@ -101,7 +108,7 @@ function ChatWorkspace(): JSX.Element {
             <div className="attachments">
                 {openChatObject?.attachments?.map((attachment: string, index: number) => (
                     <div key={index} className="attachment"
-                         onClick={() => console.log(`Attachment at index ${index}: ${attachment}`)}>
+                         onClick={() => handleOpenFile(attachment)}>
                         <p>{attachment}</p>
                     </div>
                 ))}

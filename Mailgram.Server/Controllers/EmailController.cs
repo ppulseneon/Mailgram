@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using Mailgram.Server.Enums;
 using Mailgram.Server.Extensions.Mappers;
 using Mailgram.Server.Models;
 using Mailgram.Server.Models.Requests;
@@ -5,13 +7,15 @@ using Mailgram.Server.Models.Responses;
 using Mailgram.Server.Repositories.Interfaces;
 using Mailgram.Server.Services.Interface;
 using Mailgram.Server.Services.Interfaces;
+using Mailgram.Server.Tools;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Mailgram.Server.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class EmailController(IAccountService accountService, IEmailService emailService, IMessagesRepository messagesRepository) : ControllerBase
+public class EmailController(IAccountService accountService, IEmailService emailService, IMessagesRepository messagesRepository,
+    ILogger<EmailController> logger) : ControllerBase
 {
     [HttpPost("sync", Name = "SyncEmail")]
     public async Task<ActionResult> Synchronization(Guid id)
@@ -26,7 +30,7 @@ public class EmailController(IAccountService accountService, IEmailService email
         await emailService.SyncAsync(account);
         return Ok();
     }
-
+    
     [HttpGet(Name = "GetEmails")]
     public async Task<ActionResult<List<MessagesResponse>>> Get(Guid id)
     {
@@ -93,14 +97,19 @@ public class EmailController(IAccountService accountService, IEmailService email
             return NotFound("Аккаунт не найден");
         }
         
+        logger.LogInformation("Аккаунт был найден");
+        
         if (request.IsEncrypt || request.IsSign)
         {
             // Шифруем сообщение
             request = await emailService.CreateContactMessage(account, request);
+            logger.LogInformation("Сформировали зашифрованное сообщение");
         }
-        
+       
         // Отправляем сообщение
         var result = await emailService.SendMessage(account, request);
+        
+        logger.LogInformation("Отправили сообщение");
         
         if (request.IsEncrypt || request.IsSign)
         {
@@ -114,6 +123,7 @@ public class EmailController(IAccountService accountService, IEmailService email
         // Сохраняем в сообщение отправленные файлы
         if (requestCopy.Attachments != null)
         {
+            logger.LogInformation("Сохранили отправленные файлы");
             attachmentsMessageList.AddRange(requestCopy.Attachments.Select(attachment => attachment.FileName));
         }
 
@@ -121,6 +131,7 @@ public class EmailController(IAccountService accountService, IEmailService email
         
         // Сохраняем сообщение
         await messagesRepository.SaveMessage(account.Id, result);  
+        logger.LogInformation("Сохранили локально отправленный файл");
         
         // Сохраняем вложения
         if (requestCopy.Attachments != null)
@@ -152,6 +163,32 @@ public class EmailController(IAccountService accountService, IEmailService email
         return Ok(result);
     }
     
+    [HttpPost("draft", Name = "AddDraft")]
+    public async Task<ActionResult<AccountsResponse>> AddDraft(AddDraftRequest request)
+    {
+        var account = await accountService.Get(request.UserId);
+
+        if (account == null)
+        {
+            return NotFound("Аккаунт не найден");
+        }
+        
+        var message = new Message
+        {
+            From = account!.Login.AppendDomain(account.Platform),
+            To = request.To,
+            Subject = request.Subject,
+            Date = DateTime.Now,
+            Id = await messagesRepository.GetLastSentMessageId(request.UserId),
+            HtmlContent = request.Message,
+            Folder = Folders.Drafts
+        };
+        
+        await messagesRepository.SaveMessage(account.Id, message); 
+        
+        return Ok();
+    }
+    
     [HttpGet("attachment")]
     public async Task<ActionResult<Message>> GetDecryptAttachment(Guid userId, int messageId, string attachmentName)
     {
@@ -169,6 +206,7 @@ public class EmailController(IAccountService accountService, IEmailService email
             return BadRequest("Проблемы с получением вложения");
         }
         
+        Process.Start("explorer.exe", result);
         return Ok(result);
     }
 }
