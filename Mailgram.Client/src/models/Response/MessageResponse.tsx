@@ -10,7 +10,7 @@ class MessageResponse {
     folder?: Folders;
     attachments?: string[];
     isSigned?: boolean;
-    isEncrypted?: boolean;
+    isEnrypted?: boolean;
     isSignedRight?: boolean;
     isEncryptedRight?: boolean;
     status?: boolean;    

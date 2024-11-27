@@ -1,6 +1,6 @@
 using Mailgram.Server.Models;
 using Mailgram.Server.Repositories.Interfaces;
-using Mailgram.Server.Utility;
+using Mailgram.Server.Tools;
 using Newtonsoft.Json;
 
 namespace Mailgram.Server.Repositories;

@@ -90,3 +90,11 @@
     background-color: #cf4eb1;
     padding: 0 4px 0 4px;
 }
+
+.sent-container{
+    display: flex;
+    text-align: left;
+    flex-direction: row-reverse;
+    padding: 8px 8px 0 8px;
+    align-items: center;
+}

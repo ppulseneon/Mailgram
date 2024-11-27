@@ -1,7 +1,7 @@
 
 using ElectronNET.API;
 using Mailgram.Server.Extensions;
-using Mailgram.Server.Utility;
+using Mailgram.Server.Tools;
 
 namespace Mailgram.Server;
 

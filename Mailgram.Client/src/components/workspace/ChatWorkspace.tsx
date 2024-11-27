@@ -77,7 +77,7 @@ function ChatWorkspace(): JSX.Element {
                 }
 
                 {
-                    openChatObject.isEncryptedRight ? (
+                    openChatObject.isEnrypted ? (
                         <div className="control-element">
                             <div className="encrypt">
                                 Зашифровано

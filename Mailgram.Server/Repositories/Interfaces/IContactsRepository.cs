@@ -11,3 +11,4 @@ public interface IContactsRepository
     (string, string) GetEncryptKeysPaths(Guid userId, string email);
     (string, string) GetDecryptKeysPaths(Guid userId, string email);
 }
+

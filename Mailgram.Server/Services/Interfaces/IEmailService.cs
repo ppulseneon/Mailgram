@@ -15,3 +15,4 @@ public interface IEmailService
     Task<Message> SendMessageRequestToMessage(Account account, SendMessageRequest request);
     Task<string> GetDecryptAttachment(Guid userId, int messageId, string attachmentName);
 }
+

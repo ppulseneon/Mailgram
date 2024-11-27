@@ -50,6 +50,16 @@
     font-weight: 500;
 }
 
+.input-container {
+    margin: 8px;
+    padding: 0 8px 0 8px;
+}
+
+.control-container {
+    margin: 8px;
+    padding: 0 8px 0 8px;
+}
+
 .input-container input {
     width: 100%;
     padding: 10px 15px;
@@ -96,4 +106,12 @@
 
 .action-button:hover {
     background-color: #0056b3;
+}
+
+.input-message{
+    margin: 14px;
+    padding: 0 10px 0 10px;
+    min-height: 400px;
+    background-color: #1d2a39;
+    border-radius: 12px;
 }

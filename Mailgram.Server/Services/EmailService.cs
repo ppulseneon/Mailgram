@@ -6,13 +6,11 @@ using Mailgram.Server.Models.Requests;
 using Mailgram.Server.Repositories.Interfaces;
 using Mailgram.Server.Services.Interfaces;
 using Mailgram.Server.Tools;
-using Mailgram.Server.Utility;
 using MailKit;
 using MailKit.Net.Imap;
 using MailKit.Search;
 using MimeKit;
 using Newtonsoft.Json;
-using Org.BouncyCastle.Crypto.Signers;
 using SmtpClient = MailKit.Net.Smtp.SmtpClient;
 
 namespace Mailgram.Server.Services;
@@ -24,6 +22,8 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
     {
         // Получаем все письма из базы данных
         var localSavedMessages = await messagesRepository.GetMessages(account.Id);
+        
+        var contacts = await contactsRepository.GetContactsAsync(account.Id);
         
         // Создаем список для хранения всех писем
         var allMessages = new List<Message>();
@@ -76,9 +76,11 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
                     // Обработка реквеста
                     if (mimeMessage.Headers.Contains("X-Swap-Flag"))
                     {
-                        if (localSavedMessages.FirstOrDefault(x => x.Id == summary.UniqueId.Id) == null)
+                        var contact = JsonConvert.DeserializeObject<ContactSwap>(mimeMessage.HtmlBody);
+
+                        if (contacts.FirstOrDefault(x => x.Email == contact.From &&
+                                                         x.Status == ExchangeStatus.Sent && contact.SwapStatus == SwapStatus.Response) != null)
                         {
-                            var contact = JsonConvert.DeserializeObject<ContactSwap>(mimeMessage.HtmlBody);
 
                             var importedContact = new Contact
                             {
@@ -427,9 +429,8 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
 
         if (request.IsSign)
         {
-            var hash = encryptService.ComputeSHA256Hash(request.Message);
-            var preparedHashHex = Convert.ToHexString(hash).ToLower();
-            var signature = await encryptService.CreateMessageSign(preparedHashHex, privateEcp); 
+            var hash = encryptService.ComputeSha256Hash(request.Message);
+            var signature = await encryptService.CreateMessageSign(hash, privateEcp); 
             var tempSign = await encryptService.SaveSign(signature, tempFolder);
             result.EncryptedAttachments.Add(tempSign);
         }
@@ -492,9 +493,9 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
             resultMessage.HtmlContent = await encryptService.DecryptMessage(message.HtmlContent, decryptedKey, iv!);
             
             // Обрабатываем все прикрепленные файлы
-            var newAttachments = (from attachment in resultMessage.AttachmentFiles where attachment != ".key" && attachment != ".iv" select attachment[..^4]).ToList();
+            var newAttachments = (from attachment in resultMessage.AttachmentFiles where attachment != ".key" && attachment != ".iv" && attachment != ".sign" select attachment[..^4]).ToList();
             resultMessage.AttachmentFiles = newAttachments;
-
+            
             await messagesRepository.SaveMessage(account.Id, resultMessage);
             
             if (message.AttachmentFiles != null)
@@ -522,7 +523,7 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
                 }
             }
         }
-
+        
         if (isSigned)
         {
             resultMessage.IsSigned = true;
@@ -552,11 +553,9 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
                 return;
             }
 
-            var hash = encryptService.ComputeSHA256Hash(resultMessage.HtmlContent);
-            var preparedHashHex = Convert.ToHexString(hash).ToLower(); 
-            var preparedHashBytes = Encoding.UTF8.GetBytes(preparedHashHex); 
-            var signedResult = await encryptService.VerifySign(preparedHashBytes, sign, publicEcp); 
-            resultMessage.IsEncryptedRight = signedResult;
+            var hash = encryptService.ComputeSha256Hash(resultMessage.HtmlContent);
+            var signedResult = await encryptService.VerifySign(hash, sign, publicEcp); 
+            resultMessage.IsSignedRight = signedResult;
             await messagesRepository.SaveMessage(account.Id, resultMessage);
         }
     }

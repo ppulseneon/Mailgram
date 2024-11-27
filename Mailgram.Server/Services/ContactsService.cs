@@ -19,7 +19,7 @@ public class ContactsService(IContactsRepository contactsRepository, IEmailServi
     public async Task<Contact> Add(Account account, ContactRequest request)
     {
         var contact = request.ToContact();
-        contact.Status = ExchangeStatus.Accept;
+        contact.Status = ExchangeStatus.Sent;
         await contactsRepository.SaveContact(account.Id, contact);
         var (rsa, ecp) = await contactsRepository.GenerateContactKeys(account.Id, contact.Email);
 

@@ -86,10 +86,10 @@ public class EncryptService: IEncryptService
         return resultPath;
     }
 
-    public async Task<string> SaveSign(string data, string subTempFolderName)
+    public async Task<string> SaveSign(byte[] data, string subTempFolderName)
     {
         var resultPath = Path.Combine(subTempFolderName, ".sign");
-        await File.WriteAllTextAsync(resultPath, data);
+        await File.WriteAllBytesAsync(resultPath, data);
         
         return resultPath;
     }
@@ -125,7 +125,7 @@ public class EncryptService: IEncryptService
         return decryptedMemoryStream.ToArray();
     }
 
-    public byte[] ComputeSHA256Hash(string data)
+    public byte[] ComputeSha256Hash(string data)
     {
         using var sha256 = SHA256.Create();
         var bytes = Encoding.UTF8.GetBytes(data);
@@ -213,6 +213,17 @@ public class EncryptService: IEncryptService
         var signatureBytes = rsa.SignHash(hashBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
         
         return Convert.ToBase64String(signatureBytes);
+    }
+    
+    public async Task<byte[]> CreateMessageSign(byte[] hash, string privateEcpKeyPath)
+    {
+        using var rsa = RSA.Create();
+        var privateRsaEcp = await File.ReadAllTextAsync(privateEcpKeyPath);
+        rsa.FromXmlString(privateRsaEcp);
+
+        var signatureBytes = rsa.SignHash(hash, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        return signatureBytes;
+        // return Convert.ToBase64String(signatureBytes);
     }
 
     public async Task<bool> VerifySign(byte[] hash, byte[] signature, string publicKeyXml)

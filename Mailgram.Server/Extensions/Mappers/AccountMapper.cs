@@ -1,7 +1,6 @@
 using Mailgram.Server.Models;
 using Mailgram.Server.Models.Requests;
 using Mailgram.Server.Models.Responses;
-using Mailgram.Server.Utility;
 
 namespace Mailgram.Server.Extensions.Mappers;
 

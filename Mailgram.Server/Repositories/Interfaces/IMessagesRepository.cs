@@ -13,3 +13,4 @@ public interface IMessagesRepository
     Task<int> GetLastSentMessageId(Guid id);
     Task<string> GetMessageAttachmentPath(Guid userId, int messageId, string attachmentName);
 }
+

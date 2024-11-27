@@ -1,11 +1,9 @@
 using System.Security.Cryptography;
 using System.Text;
 using Mailgram.Server.Constants;
-using Mailgram.Server.Models;
-using Mailgram.Server.Tools;
 using Newtonsoft.Json;
 
-namespace Mailgram.Server.Utility;
+namespace Mailgram.Server.Tools;
 
 public static class AppData
 {

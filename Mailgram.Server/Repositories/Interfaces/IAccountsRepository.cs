@@ -9,3 +9,4 @@ public interface IAccountsRepository
     Task<Account?> GetAccountAsync(string email);
     Task<Account?> GetAccountAsync(Guid id);
 }
+

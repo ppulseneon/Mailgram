@@ -6,7 +6,6 @@ class AccountRequest {
     platform: string;
     smtpCredentials: ConnectCredentials | null;
     imapCredentials: ConnectCredentials | null;
-
     constructor(login: string, password: string, platform: string, imapCredentials: ConnectCredentials | null, smtpCredentials: ConnectCredentials | null) {
         this.login = login;
         this.password = password;
