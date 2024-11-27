@@ -1,41 +1,67 @@
 
-namespace Mailgram.Server
+using ElectronNET.API;
+using Mailgram.Server.Extensions;
+using Mailgram.Server.Tools;
+
+namespace Mailgram.Server;
+
+public class Program
 {
-    public class Program
+    public static void Main(string[] args)
     {
-        public static void Main(string[] args)
+        var builder = WebApplication.CreateBuilder(args);
+            
+        builder.Services.AddControllers();
+            
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen();
+
+        builder.Services.AddApplicationServices();
+        builder.Services.AddRepositories();
+            
+        builder.WebHost.UseElectron(args);
+        builder.Services.AddElectron();
+        
+        builder.Services.AddCors(options =>
         {
-            var builder = WebApplication.CreateBuilder(args);
+            options.AddPolicy("AllowAnyOrigin", builder => // NOT RECOMMENDED FOR PRODUCTION
+                builder.AllowAnyOrigin()
+                    .AllowAnyMethod()
+                    .AllowAnyHeader());
+        });
+        
+        var app = builder.Build();
 
-            // Add services to the container.
+        app.UseDefaultFiles();
+        app.UseStaticFiles();
 
-            builder.Services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+        app.UseSwagger();
+        app.UseSwaggerUI();
 
-            var app = builder.Build();
+        app.UseHttpsRedirection();
 
-            app.UseDefaultFiles();
-            app.UseStaticFiles();
+        app.UseAuthorization();
+            
+        app.MapControllers();
 
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
-
-            app.UseHttpsRedirection();
-
-            app.UseAuthorization();
-
-
-            app.MapControllers();
-
-            app.MapFallbackToFile("/index.html");
-
-            app.Run();
+        app.MapFallbackToFile("/index.html");
+        
+        app.UseCors("AllowAnyOrigin");
+        
+        if (HybridSupport.IsElectronActive)
+        {
+            CreateElectronWindow();
         }
+
+        AppData.InitAppKeys();
+        
+        app.Run();
+    }
+        
+    static async void CreateElectronWindow()
+    {
+        var window = await Electron.WindowManager.CreateWindowAsync();
+        window.SetAutoHideMenuBar(true);
+        window.OnClosed += () => Electron.App.Quit();
     }
 }

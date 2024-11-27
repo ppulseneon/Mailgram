@@ -1,0 +1,117 @@
+﻿
+.workspace-sent-container{
+    background-color: #182533;
+    padding: 8px;
+    border-radius: 16px;
+}
+
+.workspace-title{
+    padding: 0 8px 0 8px;
+    color: white;
+    font-size: 26px;
+    text-align: left;
+    font-weight: 500;
+    margin: 8px;
+}
+
+.send-contact-invite{
+    display: flex;
+    padding: 0 8px 0 8px;
+}
+
+.left-block {
+    flex: 0 0 80%;
+    padding: 8px 0 0 8px;
+    box-sizing: border-box;
+}
+
+.right-block {
+    flex: 0 0 20%;
+    padding: 8px 8px 0 8px;
+    box-sizing: border-box;
+}
+
+.contacts-list{
+    padding: 0 8px 0 8px;
+    margin: 8px;
+}
+
+.send-invite-button {
+    background-color: #4e8bcf;
+    border-radius: 4px;
+    width: 100%;
+    padding: 10px 15px;
+    max-height: 40px;
+    cursor: pointer;
+}
+
+.send-invite-button p{
+    text-align: center;
+    font-weight: 500;
+}
+
+.input-container {
+    margin: 8px;
+    padding: 0 8px 0 8px;
+}
+
+.control-container {
+    margin: 8px;
+    padding: 0 8px 0 8px;
+}
+
+.input-container input {
+    width: 100%;
+    padding: 10px 15px;
+    font-size: 16px; 
+    box-sizing: border-box; 
+}
+
+.contact {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    background-color: #2b5278;
+    margin-bottom: 16px;
+    border-radius: 8px;
+}
+
+.contact-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.contact-email {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.received-email {
+    font-size: 16px;
+    font-weight: bold;
+    color: #cf4eb1;
+}
+
+.action-button {
+    margin-left: 20px;
+    padding: 5px 10px;
+    font-size: 16px;
+    background-color: #4e8bcf;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.action-button:hover {
+    background-color: #0056b3;
+}
+
+.input-message{
+    margin: 14px;
+    padding: 0 10px 0 10px;
+    min-height: 400px;
+    background-color: #1d2a39;
+    border-radius: 12px;
+}
