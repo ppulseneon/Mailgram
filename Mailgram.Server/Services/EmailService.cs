@@ -79,7 +79,9 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
                         var contact = JsonConvert.DeserializeObject<ContactSwap>(mimeMessage.HtmlBody);
 
                         if (contacts.FirstOrDefault(x => x.Email == contact.From &&
-                                                         x.Status == ExchangeStatus.Sent && contact.SwapStatus == SwapStatus.Response) != null)
+                                                         x.Status == ExchangeStatus.Sent && contact.SwapStatus == SwapStatus.Response) != null
+                            
+                            || !contacts.Any(x => x.Email == contact.From))
                         {
 
                             var importedContact = new Contact
@@ -410,6 +412,8 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
             var (dsaKey, iv) = await encryptService.GenerateTripleDes();
             
             result.Message = await encryptService.EncryptMessage(request.Message, dsaKey, iv);
+            
+            result.Subject = await encryptService.EncryptMessage(request.Subject, dsaKey, iv);
 
             var tempEncryptedDsaPath = await encryptService.EncryptKey(dsaKey, tempFolder, publicRsa);
             result.EncryptedAttachments.Add(tempEncryptedDsaPath);
@@ -491,6 +495,7 @@ public class EmailService(IMessagesRepository messagesRepository, IContactsRepos
             var decryptedKey = await encryptService.DecryptKey(key!, privateRsa);
             
             resultMessage.HtmlContent = await encryptService.DecryptMessage(message.HtmlContent, decryptedKey, iv!);
+            resultMessage.Subject = await encryptService.DecryptMessage(message.Subject, decryptedKey, iv!);
             
             // Обрабатываем все прикрепленные файлы
             var newAttachments = (from attachment in resultMessage.AttachmentFiles where attachment != ".key" && attachment != ".iv" && attachment != ".sign" select attachment[..^4]).ToList();

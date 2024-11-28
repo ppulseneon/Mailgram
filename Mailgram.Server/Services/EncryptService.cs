@@ -223,7 +223,6 @@ public class EncryptService: IEncryptService
 
         var signatureBytes = rsa.SignHash(hash, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
         return signatureBytes;
-        // return Convert.ToBase64String(signatureBytes);
     }
 
     public async Task<bool> VerifySign(byte[] hash, byte[] signature, string publicKeyXml)
